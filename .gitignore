@@ -1,0 +1,18 @@
+# Swift build artifacts
+.build/
+.swiftpm/
+
+# CLion
+.idea/
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+DerivedData/
+
+# macOS
+.DS_Store
+
+# Linux editor artifacts
+*~
+*.swp
