@@ -43,7 +43,7 @@ public struct OpenMeteoService: WeatherService, Sendable {
         return url
     }
 
-    public enum ServiceError: Error {
+    public enum ServiceError: Error, Equatable {
         case malformedURL
         case invalidResponse
         case httpError(statusCode: Int)

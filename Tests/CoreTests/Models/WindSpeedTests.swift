@@ -32,7 +32,7 @@ struct WindSpeedTests {
     // MARK: — Safety boundaries
     @Test("Below 15 is calm")
     func calmBoundary() {
-        #expect(WindSpeed(kmh: 0).swimmingSafety   == .calm)
+        #expect(WindSpeed(kmh: 0).swimmingSafety    == .calm)
         #expect(WindSpeed(kmh: 14.9).swimmingSafety == .calm)
     }
 

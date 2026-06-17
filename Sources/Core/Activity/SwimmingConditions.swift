@@ -1,23 +1,23 @@
 public struct SwimmingConditions: ActivityConditions {
-    public let activity:    Activity = .swimming
-    public let temperature: Temperature
-    public let uvIndex:     UVIndex
-    public let windSpeed:   WindSpeed
-    public let verdict:     Verdict
+    public let activity:       Activity = .swimming
+    public let airTemperature: AirTemperature
+    public let uvIndex:        UVIndex
+    public let windSpeed:      WindSpeed
+    public let verdict:        Verdict
 
-    internal init(temperature: Temperature, uvIndex: UVIndex, windSpeed: WindSpeed) {
-        self.temperature = temperature
+    internal init(airTemperature: AirTemperature, uvIndex: UVIndex, windSpeed: WindSpeed) {
+        self.airTemperature = airTemperature
         self.uvIndex     = uvIndex
         self.windSpeed   = windSpeed
         self.verdict     = SwimmingConditions.evaluate(
-            temperature: temperature,
+            airTemperature: airTemperature,
             uvIndex: uvIndex,
             windSpeed: windSpeed
         )
     }
 
     private static func evaluate(
-        temperature: Temperature,
+        airTemperature: AirTemperature,
         uvIndex:     UVIndex,
         windSpeed:   WindSpeed,
     ) -> Verdict {
@@ -25,17 +25,17 @@ public struct SwimmingConditions: ActivityConditions {
         var cautionReasons: [String] = []
 
         // Temperature assessment
-        switch temperature.owsSafety {
+        switch airTemperature.owsSafety {
         case .dangerous:
-            noGoReasons.append("Water temperature \(frmt(temperature.inCelsius)) °C (\(frmt(temperature.inFahrenheit)) °F) is below the safe minimum of 11°C")
+            noGoReasons.append("Air temperature \(frmt(airTemperature.inCelsius)) °C (\(frmt(airTemperature.inFahrenheit)) °F) is below the safe minimum of 11°C")
         case .extremeRisk:
-            noGoReasons.append("Water temperature \(frmt(temperature.inCelsius)) °C (\(frmt(temperature.inFahrenheit)) °F) — incapacitation risk within minutes")
+            noGoReasons.append("Air temperature \(frmt(airTemperature.inCelsius)) °C (\(frmt(airTemperature.inFahrenheit)) °F) — incapacitation risk within minutes")
         case .coldShock:
-            cautionReasons.append("Water temperature \(frmt(temperature.inCelsius)) °C (\(frmt(temperature.inFahrenheit)) °F) is in the cold shock zone")
+            cautionReasons.append("Air temperature \(frmt(airTemperature.inCelsius)) °C (\(frmt(airTemperature.inFahrenheit)) °F) is in the cold shock zone")
         case .restricted:
-            cautionReasons.append("Water temperature \(frmt(temperature.inCelsius)) °C (\(frmt(temperature.inFahrenheit)) °F) is below World Aquatics competition minimum (16°C)")
+            cautionReasons.append("Air temperature \(frmt(airTemperature.inCelsius)) °C (\(frmt(airTemperature.inFahrenheit)) °F) is below World Aquatics competition minimum (16°C)")
         case .wetsuitAdvised:
-            cautionReasons.append("Wetsuit advised at \(frmt(temperature.inCelsius)) °C (\(frmt(temperature.inFahrenheit)) °F)")
+            cautionReasons.append("Wetsuit advised at \(frmt(airTemperature.inCelsius)) °C (\(frmt(airTemperature.inFahrenheit)) °F)")
         case .ideal:
             break
         }

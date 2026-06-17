@@ -4,77 +4,79 @@ import Testing
 @Suite("SwimmingConditions")
 struct SwimmingConditionsTests {
 
-    @Test("Ideal temperature and low UV returns go")
-    func idealConditionsReturnsGo() {
-        let conditions = SwimmingConditions(
-            temperature: Temperature(celsius: 23),
-            uvIndex:     UVIndex(value: 1.0),
-            windSpeed:   WindSpeed(kmh: 10)
+    // MARK: - Helpers
+
+    private func conditions(
+        celsius: Double = 23,
+        uv:      Double = 1.0,
+        kmh:     Double = 10
+    ) -> SwimmingConditions {
+        SwimmingConditions(
+            airTemperature: AirTemperature(celsius: celsius),
+            uvIndex:        UVIndex(value: uv),
+            windSpeed:      WindSpeed(kmh: kmh)
         )
-        if case .go = conditions.verdict { } else {
-            Issue.record("Expected .go but got \(conditions.verdict)")
-        }
     }
+
+    private func isGo(_ verdict: Verdict) -> Bool {
+        if case .go = verdict { return true }
+
+        return false
+    }
+
+    private func isCaution(_ verdict: Verdict) -> Bool {
+        if case .caution = verdict { return true }
+
+        return false
+    }
+
+    private func isNoGo(_ verdict: Verdict) -> Bool {
+        if case .noGo = verdict { return true }
+
+        return false
+    }
+
+    private func cautionReasons(_ verdict: Verdict) -> [String] {
+        if case .caution(let reasons) = verdict { return reasons }
+
+        return []
+    }
+
+    // MARK: - noGo guard clauses
 
     @Test("Dangerous temperature returns noGo")
     func dangerousTemperatureReturnsNoGo() {
-        let conditions = SwimmingConditions(
-            temperature: Temperature(celsius: 5),
-            uvIndex:     UVIndex(value: 1.0),
-            windSpeed:   WindSpeed(kmh: 10)
-        )
-        if case .noGo = conditions.verdict { } else {
-            Issue.record("Expected .noGo but got \(conditions.verdict)")
-        }
+        #expect(isNoGo(conditions(celsius: 5).verdict))
     }
 
     @Test("Dangerous wind returns noGo")
     func dangerousWindReturnsNoGo() {
-        let conditions = SwimmingConditions(
-            temperature: Temperature(celsius: 23),
-            uvIndex:     UVIndex(value: 1.0),
-            windSpeed:   WindSpeed(kmh: 50)
-        )
-        if case .noGo = conditions.verdict { } else {
-            Issue.record("Expected .noGo but got \(conditions.verdict)")
-        }
+        #expect(isNoGo(conditions(kmh: 50).verdict))
     }
 
     @Test("Extreme UV returns noGo")
     func extremeUVReturnsNoGo() {
-        let conditions = SwimmingConditions(
-            temperature: Temperature(celsius: 23),
-            uvIndex:     UVIndex(value: 12),
-            windSpeed:   WindSpeed(kmh: 10)
-        )
-        if case .noGo = conditions.verdict { } else {
-            Issue.record("Expected .noGo but got \(conditions.verdict)")
-        }
+        #expect(isNoGo(conditions(uv: 12).verdict))
     }
+
+    // MARK: - go
+
+    @Test("Ideal conditions return go")
+    func idealConditionsReturnGo() {
+        #expect(isGo(conditions().verdict))
+    }
+
+    // MARK: - caution
 
     @Test("Wetsuit temperature returns caution")
     func wetsuitTemperatureReturnsCaution() {
-        let conditions = SwimmingConditions(
-            temperature: Temperature(celsius: 19),
-            uvIndex:     UVIndex(value: 1.0),
-            windSpeed:   WindSpeed(kmh: 10)
-        )
-        if case .caution = conditions.verdict { } else {
-            Issue.record("Expected .caution but got \(conditions.verdict)")
-        }
+        #expect(isCaution(conditions(celsius: 19).verdict))
     }
 
-    @Test("Multiple caution factors accumulate reasons")
-    func multipleCautionFactors() {
-        let conditions = SwimmingConditions(
-            temperature: Temperature(celsius: 19),
-            uvIndex:     UVIndex(value: 7.0),
-            windSpeed:   WindSpeed(kmh: 20)
-        )
-        if case .caution(let reasons) = conditions.verdict {
-            #expect(reasons.count == 3)
-        } else {
-            Issue.record("Expected .caution but got \(conditions.verdict)")
-        }
+    @Test("Multiple caution factors accumulate all reasons")
+    func multipleCautionFactorsAccumulateReasons() {
+        let verdict = conditions(celsius: 19, uv: 7.0, kmh: 20).verdict
+        #expect(isCaution(verdict))
+        #expect(cautionReasons(verdict).count == 3)
     }
 }

@@ -19,9 +19,9 @@ struct WeatherPresenter {
 
         return """
                ── Swimming Conditions ───────────────────
-               Temperature : \(frmt(weather.temperature.inCelsius))°C / \(frmt(weather.temperature.inFahrenheit))°F
-               UV Index    : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
-               Wind        : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
+               Air Temp : \(frmt(weather.airTemperature.inCelsius))°C / \(frmt(weather.airTemperature.inFahrenheit))°F
+               UV Index : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
+               Wind     : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
                \(verdictLine)
                ─────────────────────────────────────────
                """
