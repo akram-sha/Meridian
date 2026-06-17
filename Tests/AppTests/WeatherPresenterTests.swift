@@ -41,4 +41,9 @@ struct WeatherPresenterTests {
         || output.contains("Water temperature unavailable")
         #expect(hasVerdict)
     }
+
+    @Test("Output contains water temperature line")
+    func containsWaterTempLine() {
+        #expect(output.contains("20.0°C") || output.contains("Water Temp"))
+    }
 }

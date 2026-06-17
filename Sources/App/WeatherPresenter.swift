@@ -20,9 +20,17 @@ struct WeatherPresenter {
             verdictSection = "Water temperature unavailable — verdict pending"
         }
 
+        let waterTempLine: String
+        if let water = weather.waterTemperature {
+            waterTempLine = "Water Temp  : \(frmt(water.inCelsius))°C / \(frmt(water.inFahrenheit))°F"
+        } else {
+            waterTempLine = "Water Temp  : unavailable"
+        }
+
         return """
                ── Swimming Conditions ───────────────────
                Air Temp    : \(frmt(weather.airTemperature.inCelsius))°C / \(frmt(weather.airTemperature.inFahrenheit))°F
+               \(waterTempLine)
                UV Index    : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
                Wind        : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
                \(verdictSection)

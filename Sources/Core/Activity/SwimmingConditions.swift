@@ -49,7 +49,7 @@ public struct SwimmingConditions: ActivityConditions {
             break
         }
 
-        // UV assessment
+        // UV Safety Assessment.
         switch uvIndex.severity {
         case .extreme:
             noGoReasons.append("UV index \(frmt(uvIndex.value)) is extreme — sun exposure risk is severe")
@@ -63,7 +63,7 @@ public struct SwimmingConditions: ActivityConditions {
             break
         }
 
-        // Wind speed assessment
+        // Wind Speed Assessment.
         switch windSpeed.swimmingSafety {
         case .dangerous:
             noGoReasons.append("Wind \(frmt(windSpeed.inKmh)) km/h (\(frmt(windSpeed.inMph)) mph, \(frmt(windSpeed.inKnots)) kn) exceeds Force 6 — Small Craft Advisory threshold")
