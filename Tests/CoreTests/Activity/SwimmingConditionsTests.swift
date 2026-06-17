@@ -81,4 +81,15 @@ struct SwimmingConditionsTests {
         #expect(isCaution(verdict))
         #expect(cautionReasons(verdict).count == 3)
     }
+
+    @Test("swimmingConditions is nil when waterTemperature is absent")
+    func swimmingConditionsNilWithoutWaterTemperature() {
+        let weather = WeatherResult(
+            airTemperature: AirTemperature(celsius: 22.0),
+            waterTemperature: nil,
+            uvIndex: UVIndex(value: 3.0),
+            windSpeed: WindSpeed(kmh: 10.0)
+        )
+        #expect(weather.swimmingConditions == nil)
+    }
 }

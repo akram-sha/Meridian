@@ -16,3 +16,8 @@ DerivedData/
 # Linux editor artifacts
 *~
 *.swp
+
+# Secrets
+.env
+
+*.md

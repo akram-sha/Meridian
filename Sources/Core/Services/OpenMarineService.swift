@@ -3,16 +3,14 @@ import Foundation
 import FoundationNetworking
 #endif
 
-public struct OpenMeteoService: WeatherService, Sendable {
-    private let session:       URLSession
-    private let marineService: (any MarineService)?
+public struct OpenMarineService: MarineService, Sendable {
+    private let session: URLSession
 
-    public init(session: URLSession = .shared, marineService: (any MarineService)? = nil) {
-        self.session       = session
-        self.marineService = marineService
+    public init(session: URLSession = .shared) {
+        self.session = session
     }
 
-    public func fetch(latitude: Double, longitude: Double) async throws -> WeatherResult {
+    public func fetch(latitude: Double, longitude: Double) async throws -> WaterTemperature {
         let url = try buildURL(latitude: latitude, longitude: longitude)
         let (data, response) = try await session.data(from: url)
         let OK = 200
@@ -24,9 +22,8 @@ public struct OpenMeteoService: WeatherService, Sendable {
             throw ServiceError.httpError(statusCode: http.statusCode)
         }
 
-        let decoded   = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
-        let waterTemp = try? await marineService?.fetch(latitude: latitude, longitude: longitude)
-        return decoded.toWeatherResult(waterTemperature: waterTemp)
+        let decoded = try JSONDecoder().decode(MarineResponse.self, from: data)
+        return decoded.toWaterTemperature()
     }
 
     private func buildURL(latitude: Double, longitude: Double) throws -> URL {
@@ -34,12 +31,12 @@ public struct OpenMeteoService: WeatherService, Sendable {
         let privacyLongitude = (longitude * 100).rounded() / 100
         var components = URLComponents()
         components.scheme = "https"
-        components.host   = "api.open-meteo.com"
-        components.path   = "/v1/forecast"
+        components.host   = "marine-api.open-meteo.com"
+        components.path   = "/v1/marine"
         components.queryItems = [
             URLQueryItem(name: "latitude",  value: String(privacyLatitude)),
             URLQueryItem(name: "longitude", value: String(privacyLongitude)),
-            URLQueryItem(name: "current",   value: "temperature_2m,uv_index,wind_speed_10m"),
+            URLQueryItem(name: "current",   value: "sea_surface_temperature"),
         ]
 
         guard let url = components.url else {
@@ -52,5 +49,6 @@ public struct OpenMeteoService: WeatherService, Sendable {
         case malformedURL
         case invalidResponse
         case httpError(statusCode: Int)
+        case inlandCoordinate
     }
 }

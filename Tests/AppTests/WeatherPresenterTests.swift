@@ -30,20 +30,16 @@ struct WeatherPresenterTests {
 
     @Test("Output contains wind speed line")
     func containsWindLine() {
-        #expect(output.contains("12.0 km/h") || output.contains("12.0"))
+        #expect(output.contains("12.0 km/h"))
     }
 
-    @Test("Output contains verdict line")
-    func containsVerdictLine() {
-        let hasVerdict = output.contains("Good to swim")
-        || output.contains("Swim with caution")
-        || output.contains("Do not swim")
-        || output.contains("Water temperature unavailable")
-        #expect(hasVerdict)
+    @Test("Output contains specific caution verdict for 20°C water")
+    func containsCautionVerdict() {
+        #expect(output.contains("Swim with caution"))
     }
 
     @Test("Output contains water temperature line")
     func containsWaterTempLine() {
-        #expect(output.contains("20.0°C") || output.contains("Water Temp"))
+        #expect(output.contains("20.0°C"))
     }
 }

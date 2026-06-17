@@ -25,7 +25,7 @@ public struct SwimmingConditions: ActivityConditions {
     }
 
     private static func evaluate(
-        airTemperature: AirTemperature,
+        airTemperature: AirTemperature,      // For future SwiftUI display.
         waterTemperature: WaterTemperature,
         uvIndex:     UVIndex,
         windSpeed:   WindSpeed,

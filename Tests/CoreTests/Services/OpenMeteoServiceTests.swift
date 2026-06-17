@@ -87,6 +87,41 @@ struct OpenMeteoServiceTests {
         let response = try JSONDecoder().decode(OpenMeteoResponse.self, from: Data(json.utf8))
         return response.toWeatherResult()
     }
+
+    @Test("toWeatherResult passes through waterTemperature when provided")
+    func toWeatherResultPassesThroughWaterTemperature() throws {
+        let json = """
+                   {
+                       "current": {
+                           "temperature_2m": 20.0,
+                           "uv_index": 3.0,
+                           "wind_speed_10m": 10.0
+                       }
+                   }
+                   """.data(using: .utf8)!
+
+        let decoded   = try JSONDecoder().decode(OpenMeteoResponse.self, from: json)
+        let waterTemp = WaterTemperature(celsius: 18.0)
+        let result    = decoded.toWeatherResult(waterTemperature: waterTemp)
+        #expect(result.waterTemperature?.inCelsius == 18.0)
+    }
+
+    @Test("toWeatherResult waterTemperature is nil when not provided")
+    func toWeatherResultWaterTemperatureDefaultsToNil() throws {
+        let json = """
+                   {
+                       "current": {
+                           "temperature_2m": 20.0,
+                           "uv_index": 3.0,
+                           "wind_speed_10m": 10.0
+                       }
+                   }
+                   """.data(using: .utf8)!
+
+        let decoded = try JSONDecoder().decode(OpenMeteoResponse.self, from: json)
+        let result  = decoded.toWeatherResult()
+        #expect(result.waterTemperature == nil)
+    }
 }
 
 // MARK: - FakeWeatherService

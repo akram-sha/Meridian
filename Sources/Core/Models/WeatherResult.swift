@@ -1,6 +1,6 @@
 public struct WeatherResult: Sendable {
     public let airTemperature:   AirTemperature
-    public let waterTemperature: WaterTemperature?  // nil until marine fetch is added
+    public let waterTemperature: WaterTemperature?  // nil for inland coordinates or if marine API is unavailable
     public let uvIndex:          UVIndex
     public let windSpeed:        WindSpeed
 
