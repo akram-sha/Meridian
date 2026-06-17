@@ -3,26 +3,29 @@ import Foundation
 
 struct WeatherPresenter {
     public func present(_ weather: WeatherResult) -> String {
-        let conditions = weather.swimmingConditions
-        let verdictLine: String
+        let verdictSection: String
 
-        switch conditions.verdict {
-        case .go:
-            verdictLine = "Good to swim"
-        case .caution(let reasons):
-            verdictLine = "Swim with caution\n"
-            + reasons.map { "  • \($0)" }.joined(separator: "\n")
-        case .noGo(let reasons):
-            verdictLine = "Do not swim\n"
-            + reasons.map { "  • \($0)" }.joined(separator: "\n")
+        if let conditions = weather.swimmingConditions {
+            switch conditions.verdict {
+            case .go:
+                verdictSection = "Good to swim"
+            case .caution(let reasons):
+                verdictSection = "Swim with caution\n"
+                + reasons.map { "  • \($0)" }.joined(separator: "\n")
+            case .noGo(let reasons):
+                verdictSection = "Do not swim\n"
+                + reasons.map { "  • \($0)" }.joined(separator: "\n")
+            }
+        } else {
+            verdictSection = "Water temperature unavailable — verdict pending"
         }
 
         return """
                ── Swimming Conditions ───────────────────
-               Air Temp : \(frmt(weather.airTemperature.inCelsius))°C / \(frmt(weather.airTemperature.inFahrenheit))°F
-               UV Index : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
-               Wind     : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
-               \(verdictLine)
+               Air Temp    : \(frmt(weather.airTemperature.inCelsius))°C / \(frmt(weather.airTemperature.inFahrenheit))°F
+               UV Index    : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
+               Wind        : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
+               \(verdictSection)
                ─────────────────────────────────────────
                """
     }

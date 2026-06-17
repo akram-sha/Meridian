@@ -7,14 +7,16 @@ struct SwimmingConditionsTests {
     // MARK: - Helpers
 
     private func conditions(
-        celsius: Double = 23,
-        uv:      Double = 1.0,
-        kmh:     Double = 10
+        airTemperature:   Double = 18,
+        waterTemperature: Double = 23,
+        uv:               Double = 1.0,
+        kmh:              Double = 10
     ) -> SwimmingConditions {
         SwimmingConditions(
-            airTemperature: AirTemperature(celsius: celsius),
-            uvIndex:        UVIndex(value: uv),
-            windSpeed:      WindSpeed(kmh: kmh)
+            airTemperature:   AirTemperature(celsius: airTemperature),
+            waterTemperature: WaterTemperature(celsius: waterTemperature),
+            uvIndex:          UVIndex(value: uv),
+            windSpeed:        WindSpeed(kmh: kmh)
         )
     }
 
@@ -46,7 +48,7 @@ struct SwimmingConditionsTests {
 
     @Test("Dangerous temperature returns noGo")
     func dangerousTemperatureReturnsNoGo() {
-        #expect(isNoGo(conditions(celsius: 5).verdict))
+        #expect(isNoGo(conditions(waterTemperature: 5).verdict))
     }
 
     @Test("Dangerous wind returns noGo")
@@ -70,12 +72,12 @@ struct SwimmingConditionsTests {
 
     @Test("Wetsuit temperature returns caution")
     func wetsuitTemperatureReturnsCaution() {
-        #expect(isCaution(conditions(celsius: 19).verdict))
+        #expect(isCaution(conditions(waterTemperature: 19).verdict))
     }
 
     @Test("Multiple caution factors accumulate all reasons")
     func multipleCautionFactorsAccumulateReasons() {
-        let verdict = conditions(celsius: 19, uv: 7.0, kmh: 20).verdict
+        let verdict = conditions(waterTemperature: 19, uv: 7.0, kmh: 20).verdict
         #expect(isCaution(verdict))
         #expect(cautionReasons(verdict).count == 3)
     }

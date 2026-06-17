@@ -10,9 +10,10 @@ struct WeatherPresenterTests {
 
     init() {
         let weather = WeatherResult(
-            airTemperature: AirTemperature(celsius: 22.5),
-            uvIndex:        UVIndex(value: 6.8),
-            windSpeed:      WindSpeed(kmh: 12.0)
+            airTemperature:   AirTemperature(celsius: 22.5),
+            waterTemperature: WaterTemperature(celsius: 20),
+            uvIndex:          UVIndex(value: 6.8),
+            windSpeed:        WindSpeed(kmh: 12.0)
         )
         output = WeatherPresenter().present(weather)
     }
@@ -34,6 +35,10 @@ struct WeatherPresenterTests {
 
     @Test("Output contains verdict line")
     func containsVerdictLine() {
-        #expect(output.contains("caution") || output.contains("Caution") || output.contains("go") || output.contains("Go"))
+        let hasVerdict = output.contains("Good to swim")
+        || output.contains("Swim with caution")
+        || output.contains("Do not swim")
+        || output.contains("Water temperature unavailable")
+        #expect(hasVerdict)
     }
 }
