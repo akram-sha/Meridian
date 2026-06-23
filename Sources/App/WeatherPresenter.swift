@@ -29,10 +29,11 @@ struct WeatherPresenter {
 
         return """
                ── Swimming Conditions ───────────────────
-               Air Temp    : \(frmt(weather.airTemperature.inCelsius))°C / \(frmt(weather.airTemperature.inFahrenheit))°F
+               Air Temp     : \(frmt(weather.airTemperature.inCelsius))°C / \(frmt(weather.airTemperature.inFahrenheit))°F
                \(waterTempLine)
-               UV Index    : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
-               Wind        : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
+               UV Index     : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
+               Wind         : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
+               Weather Code : \(weather.weatherCode.description)
                \(verdictSection)
                ─────────────────────────────────────────
                """

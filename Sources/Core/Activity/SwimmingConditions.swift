@@ -4,34 +4,39 @@ public struct SwimmingConditions: ActivityConditions {
     public let waterTemperature: WaterTemperature
     public let uvIndex:          UVIndex
     public let windSpeed:        WindSpeed
+    public let weatherCode:      WeatherCode
     public let verdict:          Verdict
 
     internal init(
         airTemperature:   AirTemperature,
         waterTemperature: WaterTemperature,
         uvIndex:          UVIndex,
-        windSpeed:        WindSpeed
+        windSpeed:        WindSpeed,
+        weatherCode:      WeatherCode,
     ) {
         self.airTemperature   = airTemperature
         self.waterTemperature = waterTemperature
         self.uvIndex          = uvIndex
         self.windSpeed        = windSpeed
-        self.verdict          = SwimmingConditions.evaluate(
-            airTemperature:   airTemperature,
-            waterTemperature: waterTemperature,
-            uvIndex:          uvIndex,
-            windSpeed:        windSpeed
-        )
+        self.weatherCode      = weatherCode
+        self.verdict          = SwimmingConditions.evaluate(airTemperature: airTemperature, waterTemperature: waterTemperature, uvIndex: uvIndex, windSpeed: windSpeed, weatherCode: weatherCode)
     }
 
+    // Air Temperature kept for future SwiftUI display.
     private static func evaluate(
-        airTemperature: AirTemperature,      // For future SwiftUI display.
+        airTemperature: AirTemperature,
         waterTemperature: WaterTemperature,
-        uvIndex:     UVIndex,
-        windSpeed:   WindSpeed,
+        uvIndex: UVIndex,
+        windSpeed: WindSpeed,
+        weatherCode: WeatherCode,
     ) -> Verdict {
         var noGoReasons: [String]    = []
         var cautionReasons: [String] = []
+
+        // Hard noGo: thunderstorm overrides everything else
+        if weatherCode.isThunderstorm {
+            return .noGo(reasons: ["Thunderstorm (WMO \(weatherCode.raw))"])
+        }
 
         // Temperature assessment
         switch waterTemperature.owsSafety {

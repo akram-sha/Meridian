@@ -10,37 +10,35 @@ struct SwimmingConditionsTests {
         airTemperature:   Double = 18,
         waterTemperature: Double = 23,
         uv:               Double = 1.0,
-        kmh:              Double = 10
+        kmh:              Double = 10,
+        weatherCode:      Int    = 1,
     ) -> SwimmingConditions {
         SwimmingConditions(
             airTemperature:   AirTemperature(celsius: airTemperature),
             waterTemperature: WaterTemperature(celsius: waterTemperature),
             uvIndex:          UVIndex(value: uv),
-            windSpeed:        WindSpeed(kmh: kmh)
+            windSpeed:        WindSpeed(kmh: kmh),
+            weatherCode:      WeatherCode(raw: weatherCode),
         )
     }
 
     private func isGo(_ verdict: Verdict) -> Bool {
         if case .go = verdict { return true }
-
         return false
     }
 
     private func isCaution(_ verdict: Verdict) -> Bool {
         if case .caution = verdict { return true }
-
         return false
     }
 
     private func isNoGo(_ verdict: Verdict) -> Bool {
         if case .noGo = verdict { return true }
-
         return false
     }
 
     private func cautionReasons(_ verdict: Verdict) -> [String] {
         if case .caution(let reasons) = verdict { return reasons }
-
         return []
     }
 
@@ -85,11 +83,29 @@ struct SwimmingConditionsTests {
     @Test("swimmingConditions is nil when waterTemperature is absent")
     func swimmingConditionsNilWithoutWaterTemperature() {
         let weather = WeatherResult(
-            airTemperature: AirTemperature(celsius: 22.0),
+            airTemperature:   AirTemperature(celsius: 22.0),
             waterTemperature: nil,
-            uvIndex: UVIndex(value: 3.0),
-            windSpeed: WindSpeed(kmh: 10.0)
+            uvIndex:          UVIndex(value: 3.0),
+            windSpeed:        WindSpeed(kmh: 10.0),
+            weatherCode:      WeatherCode(raw: 1),
         )
         #expect(weather.swimmingConditions == nil)
+    }
+
+    @Test("Thunderstorm is always noGo regardless of other conditions")
+    func thunderstormIsNoGo() {
+        let verdict = conditions(
+            airTemperature:  25,
+            waterTemperature: 24,   // ideal
+            uv:               2,    // low
+            kmh:              5,    // calm
+            weatherCode:      95    // thunderstorm
+        ).verdict
+
+        if case .noGo(let reasons) = verdict {
+            #expect(reasons.contains { $0.contains("Thunderstorm") })
+        } else {
+            Issue.record("Expected .noGo but got \(verdict)")
+        }
     }
 }

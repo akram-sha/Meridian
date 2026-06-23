@@ -28,11 +28,11 @@ public struct WaterTemperature: Sendable {
     }
 
     public enum OWSSafety: Equatable {
-        case ideal          //  ≥ 22°C — comfortable, no wetsuit needed
-        case wetsuitAdvised // 18–21°C — wetsuit strongly advised for most swimmers
-        case restricted     // 16–17°C — below World Aquatics competition minimum
-        case coldShock      // 12–15°C — cold shock zone, involuntary gasping, drowning risk
-        case extremeRisk    // 11–11.9°C — near British Triathlon hard cutoff, incapacitation likely
-        case dangerous      //  < 11°C — British Triathlon: no OWS recommended below this
+        case ideal           //  ≥ 22°C — comfortable, no wetsuit needed
+        case wetsuitAdvised  // 18–21°C — wetsuit strongly advised for most swimmers
+        case restricted      // 16–17°C — below World Aquatics competition minimum
+        case coldShock       // 12–15°C — cold shock zone, involuntary gasping, drowning risk
+        case extremeRisk     // 11–11.9°C — near British Triathlon hard cutoff, incapacitation likely
+        case dangerous       //  < 11°C — British Triathlon: no OWS recommended below this
     }
 }

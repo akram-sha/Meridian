@@ -13,7 +13,8 @@ struct WeatherPresenterTests {
             airTemperature:   AirTemperature(celsius: 22.5),
             waterTemperature: WaterTemperature(celsius: 20),
             uvIndex:          UVIndex(value: 6.8),
-            windSpeed:        WindSpeed(kmh: 12.0)
+            windSpeed:        WindSpeed(kmh: 12.0),
+            weatherCode:      WeatherCode(raw: 1),
         )
         output = WeatherPresenter().present(weather)
     }
@@ -41,5 +42,10 @@ struct WeatherPresenterTests {
     @Test("Output contains water temperature line")
     func containsWaterTempLine() {
         #expect(output.contains("20.0°C"))
+    }
+
+    @Test("Output contains weather code description")
+    func containsWeatherCodeDescription() {
+        #expect(output.contains("Partly cloudy"))
     }
 }
