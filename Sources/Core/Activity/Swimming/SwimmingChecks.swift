@@ -1,7 +1,7 @@
 // Shared formatter — 1 decimal place, used by all reason strings.
 private func f(_ v: Double) -> String { String(format: "%.1f", v) }
 
-// MARK: - Hard guards
+// MARK: - Hard guards.
 // Registered in SwimmingConditions.hardGuards.
 // The first non-nil result ends evaluation immediately.
 
@@ -12,7 +12,7 @@ internal struct ThunderstormRule: SwimmingRule {
     }
 }
 
-// MARK: - Scoring rules
+// MARK: - Scoring rules.
 // Registered in SwimmingConditions.scoringRules.
 // All rules run; noGo and caution reasons accumulate independently.
 

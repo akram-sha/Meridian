@@ -7,7 +7,7 @@ public struct WindSpeed: Sendable {
         self.kmh = kmh
     }
 
-    // MARK: — Unit conversions
+    // MARK: — Unit conversions.
     private static let knotsRatio: Double           = 1.852
     private static let milesRatio: Double           = 1.609344
     private static let metersPerSecondRatio: Double = 3.6
@@ -17,7 +17,7 @@ public struct WindSpeed: Sendable {
     public var inMph: Double   { kmh / Self.milesRatio }
     public var inMs: Double    { kmh / Self.metersPerSecondRatio }
 
-    // MARK: — Swimming safety
+    // MARK: — Swimming safety.
     public var swimmingSafety: SwimmingSafety {
         // Force 6 (39 km/h+): Small Craft Advisory threshold.
         guard kmh < 39.0 else { return .dangerous }

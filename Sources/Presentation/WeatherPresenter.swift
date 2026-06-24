@@ -1,7 +1,8 @@
 import Core
 import Foundation
 
-struct WeatherPresenter {
+public struct WeatherPresenter {
+    public init() {}
     public func present(_ weather: WeatherResult) -> String {
         let verdictSection: String
 

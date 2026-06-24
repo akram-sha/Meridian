@@ -21,11 +21,10 @@ public struct SwimmingConditions: ActivityConditions {
         self.verdict          = SwimmingConditions.evaluate(weather)
     }
 
-    // MARK: - Rule registry
+    // MARK: - Rule registry.
 
-    // Hard guards run first. The first non-nil result short-circuits everything
-    // else — use this for conditions that override all other factors (thunderstorm,
-    // red flag closure, etc.)
+    // Hard guards run first. The first non-nil result short-circuits everything.
+    // else — use this for conditions that override all other factors (thunderstorm, red flag closure, etc.).
     private static let hardGuards: [any SwimmingRule] = [
         ThunderstormRule(),
     ]
@@ -39,7 +38,7 @@ public struct SwimmingConditions: ActivityConditions {
         WaveHeightRule(),
     ]
 
-    // MARK: - Aggregator
+    // MARK: - Aggregator.
 
     private static func evaluate(_ weather: WeatherResult) -> Verdict {
         for rule in hardGuards {
