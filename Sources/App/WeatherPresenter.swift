@@ -22,15 +22,23 @@ struct WeatherPresenter {
 
         let waterTempLine: String
         if let water = weather.waterTemperature {
-            waterTempLine = "Water Temp  : \(frmt(water.inCelsius))°C / \(frmt(water.inFahrenheit))°F"
+            waterTempLine = "Water Temp   : \(frmt(water.inCelsius))°C / \(frmt(water.inFahrenheit))°F"
         } else {
-            waterTempLine = "Water Temp  : unavailable"
+            waterTempLine = "Water Temp   : unavailable"
+        }
+
+        let waveLine: String
+        if let wave = weather.waveHeight {
+            waveLine = String(format: "Wave         : %.1f m / %.1f ft", wave.inMetres, wave.inFeet)
+        } else {
+            waveLine = "Wave         : unavailable"
         }
 
         return """
                ── Swimming Conditions ───────────────────
                Air Temp     : \(frmt(weather.airTemperature.inCelsius))°C / \(frmt(weather.airTemperature.inFahrenheit))°F
                \(waterTempLine)
+               \(waveLine)
                UV Index     : \(frmt(weather.uvIndex.value)) — \(label(for: weather.uvIndex.severity))
                Wind         : \(frmt(weather.windSpeed.inKmh)) km/h / \(frmt(weather.windSpeed.inKnots)) kn
                Weather Code : \(weather.weatherCode.description)

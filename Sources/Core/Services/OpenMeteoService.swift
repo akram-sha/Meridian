@@ -25,8 +25,11 @@ public struct OpenMeteoService: WeatherService, Sendable {
         }
 
         let decoded   = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
-        let waterTemp = try? await marineService?.fetch(latitude: latitude, longitude: longitude)
-        return decoded.toWeatherResult(waterTemperature: waterTemp)
+        let marineConditions = try? await marineService?.fetch(latitude: latitude, longitude: longitude)
+        return decoded.toWeatherResult(
+            waterTemperature: marineConditions?.waterTemperature,
+            waveHeight:       marineConditions?.waveHeight
+        )
     }
 
     private func buildURL(latitude: Double, longitude: Double) throws -> URL {

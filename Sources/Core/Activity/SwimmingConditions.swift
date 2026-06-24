@@ -2,94 +2,63 @@ public struct SwimmingConditions: ActivityConditions {
     public let activity:         Activity = .swimming
     public let airTemperature:   AirTemperature
     public let waterTemperature: WaterTemperature
+    public let waveHeight:       WaveHeight?
     public let uvIndex:          UVIndex
     public let windSpeed:        WindSpeed
     public let weatherCode:      WeatherCode
     public let verdict:          Verdict
 
-    internal init(
-        airTemperature:   AirTemperature,
-        waterTemperature: WaterTemperature,
-        uvIndex:          UVIndex,
-        windSpeed:        WindSpeed,
-        weatherCode:      WeatherCode,
-    ) {
-        self.airTemperature   = airTemperature
+    // waterTemperature is passed explicitly because WeatherResult.waterTemperature
+    // is optional and SwimmingConditions is only created after the nil guard in
+    // WeatherResult.swimmingConditions.
+    internal init(weather: WeatherResult, waterTemperature: WaterTemperature) {
+        self.airTemperature   = weather.airTemperature
         self.waterTemperature = waterTemperature
-        self.uvIndex          = uvIndex
-        self.windSpeed        = windSpeed
-        self.weatherCode      = weatherCode
-        self.verdict          = SwimmingConditions.evaluate(airTemperature: airTemperature, waterTemperature: waterTemperature, uvIndex: uvIndex, windSpeed: windSpeed, weatherCode: weatherCode)
+        self.waveHeight       = weather.waveHeight
+        self.uvIndex          = weather.uvIndex
+        self.windSpeed        = weather.windSpeed
+        self.weatherCode      = weather.weatherCode
+        self.verdict          = SwimmingConditions.evaluate(weather)
     }
 
-    // Air Temperature kept for future SwiftUI display.
-    private static func evaluate(
-        airTemperature: AirTemperature,
-        waterTemperature: WaterTemperature,
-        uvIndex: UVIndex,
-        windSpeed: WindSpeed,
-        weatherCode: WeatherCode,
-    ) -> Verdict {
-        var noGoReasons: [String]    = []
+    // MARK: - Rule registry
+
+    // Hard guards run first. The first non-nil result short-circuits everything
+    // else — use this for conditions that override all other factors (thunderstorm,
+    // red flag closure, etc.)
+    private static let hardGuards: [any SwimmingRule] = [
+        ThunderstormRule(),
+    ]
+
+    // Scoring rules all run. noGo and caution reasons accumulate separately.
+    // To add a new check: write a SwimmingRule conformance and append it here.
+    private static let scoringRules: [any SwimmingRule] = [
+        WaterTemperatureRule(),
+        UVIndexRule(),
+        WindSpeedRule(),
+        WaveHeightRule(),
+    ]
+
+    // MARK: - Aggregator
+
+    private static func evaluate(_ weather: WeatherResult) -> Verdict {
+        for rule in hardGuards {
+            if let verdict = rule.evaluate(weather) { return verdict }
+        }
+
+        var noGoReasons:    [String] = []
         var cautionReasons: [String] = []
 
-        // Hard noGo: thunderstorm overrides everything else
-        if weatherCode.isThunderstorm {
-            return .noGo(reasons: ["Thunderstorm (WMO \(weatherCode.raw))"])
+        for rule in scoringRules {
+            switch rule.evaluate(weather) {
+            case .noGo(let r):    noGoReasons.append(contentsOf: r)
+            case .caution(let r): cautionReasons.append(contentsOf: r)
+            case .go, .none:      break
+            }
         }
 
-        // Temperature assessment
-        switch waterTemperature.owsSafety {
-        case .dangerous:
-            noGoReasons.append("Water surface temperature \(frmt(waterTemperature.inCelsius)) °C (\(frmt(waterTemperature.inFahrenheit)) °F) is below the safe minimum of 11°C")
-        case .extremeRisk:
-            noGoReasons.append("Water surface temperature \(frmt(waterTemperature.inCelsius)) °C (\(frmt(waterTemperature.inFahrenheit)) °F) — incapacitation risk within minutes")
-        case .coldShock:
-            cautionReasons.append("Water surface temperature \(frmt(waterTemperature.inCelsius)) °C (\(frmt(waterTemperature.inFahrenheit)) °F) is in the cold shock zone")
-        case .restricted:
-            cautionReasons.append("Water surface temperature \(frmt(waterTemperature.inCelsius)) °C (\(frmt(waterTemperature.inFahrenheit)) °F) is below World Aquatics competition minimum (16°C)")
-        case .wetsuitAdvised:
-            cautionReasons.append("Water surface advised at \(frmt(waterTemperature.inCelsius)) °C (\(frmt(waterTemperature.inFahrenheit)) °F)")
-        case .ideal:
-            break
-        }
-
-        // UV Safety Assessment.
-        switch uvIndex.severity {
-        case .extreme:
-            noGoReasons.append("UV index \(frmt(uvIndex.value)) is extreme — sun exposure risk is severe")
-        case .veryHigh:
-            cautionReasons.append("UV index \(frmt(uvIndex.value)) is very high — apply high SPF and limit exposure time")
-        case .high:
-            cautionReasons.append("UV index \(frmt(uvIndex.value)) is high — sun protection required")
-        case .moderate:
-            cautionReasons.append("UV index \(frmt(uvIndex.value)) is moderate — sun protection recommended")
-        case .low:
-            break
-        }
-
-        // Wind Speed Assessment.
-        switch windSpeed.swimmingSafety {
-        case .dangerous:
-            noGoReasons.append("Wind \(frmt(windSpeed.inKmh)) km/h (\(frmt(windSpeed.inMph)) mph, \(frmt(windSpeed.inKnots)) kn) exceeds Force 6 — Small Craft Advisory threshold")
-        case .concerning:
-            cautionReasons.append("Wind \(frmt(windSpeed.inKmh)) km/h (\(frmt(windSpeed.inMph)) mph, \(frmt(windSpeed.inKnots)) kn) — Force 4–5, organized swims typically canceled")
-        case .moderate:
-            cautionReasons.append("Wind \(frmt(windSpeed.inKmh)) km/h (\(frmt(windSpeed.inMph)) mph, \(frmt(windSpeed.inKnots)) kn) — surface chop may affect sighting")
-        case .calm:
-            break
-        }
-
-        if !noGoReasons.isEmpty {
-            return .noGo(reasons: noGoReasons)
-        } else if !cautionReasons.isEmpty {
-            return .caution(reasons: cautionReasons)
-        } else {
-            return .go
-        }
-    }
-
-    private static func frmt(_ value: Double) -> String {
-        String(format: "%.1f", value)
+        if !noGoReasons.isEmpty    { return .noGo(reasons: noGoReasons) }
+        if !cautionReasons.isEmpty { return .caution(reasons: cautionReasons) }
+        return .go
     }
 }

@@ -6,6 +6,7 @@ import Testing
 struct MarineServiceTests {
 
     // MARK: — JSON decoding
+
     @Test("Decodes sea surface temperature from valid JSON")
     func decodesSeaSurfaceTemperature() throws {
         let json = """
@@ -20,8 +21,8 @@ struct MarineServiceTests {
         #expect(decoded.current.seaSurfaceTemperature == 17.4)
     }
 
-    @Test("toWaterTemperature returns correct celsius value")
-    func toWaterTemperatureReturnsCelsius() throws {
+    @Test("toMarineConditions returns correct celsius value")
+    func toMarineConditionsReturnsCelsius() throws {
         let json = """
                    {
                        "current": {
@@ -30,9 +31,40 @@ struct MarineServiceTests {
                    }
                    """.data(using: .utf8)!
 
-        let decoded   = try JSONDecoder().decode(MarineResponse.self, from: json)
-        let waterTemp = decoded.toWaterTemperature()
-        #expect(waterTemp.inCelsius == 21.0)
+        let decoded    = try JSONDecoder().decode(MarineResponse.self, from: json)
+        let conditions = decoded.toMarineConditions()
+        #expect(conditions.waterTemperature.inCelsius == 21.0)
+    }
+
+    @Test("toMarineConditions maps wave_height when present")
+    func toMarineConditionsMapsWaveHeight() throws {
+        let json = """
+                   {
+                       "current": {
+                           "sea_surface_temperature": 18.0,
+                           "wave_height": 1.2
+                       }
+                   }
+                   """.data(using: .utf8)!
+
+        let decoded    = try JSONDecoder().decode(MarineResponse.self, from: json)
+        let conditions = decoded.toMarineConditions()
+        #expect(abs((conditions.waveHeight?.inMetres ?? -1) - 1.2) < 0.0001)
+    }
+
+    @Test("toMarineConditions wave height is nil when absent from JSON")
+    func toMarineConditionsWaveHeightNilWhenAbsent() throws {
+        let json = """
+                   {
+                       "current": {
+                           "sea_surface_temperature": 18.0
+                       }
+                   }
+                   """.data(using: .utf8)!
+
+        let decoded    = try JSONDecoder().decode(MarineResponse.self, from: json)
+        let conditions = decoded.toMarineConditions()
+        #expect(conditions.waveHeight == nil)
     }
 
     @Test("Decoding fails when sea_surface_temperature key is missing")
@@ -60,11 +92,12 @@ struct MarineServiceTests {
     }
 
     // MARK: — Protocol contract
-    @Test("StubMarineService returns a WaterTemperature")
+
+    @Test("StubMarineService returns correct water temperature")
     func stubReturnsWaterTemperature() async throws {
         let stub   = StubMarineService()
         let result = try await stub.fetch(latitude: 52.37, longitude: 4.90)
-        #expect(result.inCelsius == 18.0)
+        #expect(result.waterTemperature.inCelsius == 18.0)
     }
 
     @Test("StubMarineService ignores coordinates")
@@ -72,12 +105,13 @@ struct MarineServiceTests {
         let stub      = StubMarineService()
         let amsterdam = try await stub.fetch(latitude: 52.37, longitude: 4.90)
         let inland    = try await stub.fetch(latitude: 51.50, longitude: 5.50)
-        #expect(amsterdam.inCelsius == inland.inCelsius)
+        #expect(amsterdam.waterTemperature.inCelsius == inland.waterTemperature.inCelsius)
     }
 
     // MARK: — OWS safety integration
+
     @Test("17.4°C sea surface maps to restricted OWS safety")
-        func owsSafetyForColdSeaTemp() throws {
+    func owsSafetyForColdSeaTemp() throws {
         let json = """
         {
             "current": {
@@ -86,9 +120,9 @@ struct MarineServiceTests {
         }
         """.data(using: .utf8)!
 
-        let decoded   = try JSONDecoder().decode(MarineResponse.self, from: json)
-        let waterTemp = decoded.toWaterTemperature()
-        #expect(waterTemp.owsSafety == .restricted)
+        let decoded    = try JSONDecoder().decode(MarineResponse.self, from: json)
+        let conditions = decoded.toMarineConditions()
+        #expect(conditions.waterTemperature.owsSafety == .restricted)
     }
 
     @Test("22.0°C sea surface maps to ideal OWS safety")
@@ -101,8 +135,8 @@ struct MarineServiceTests {
         }
         """.data(using: .utf8)!
 
-        let decoded   = try JSONDecoder().decode(MarineResponse.self, from: json)
-        let waterTemp = decoded.toWaterTemperature()
-        #expect(waterTemp.owsSafety == .ideal)
+        let decoded    = try JSONDecoder().decode(MarineResponse.self, from: json)
+        let conditions = decoded.toMarineConditions()
+        #expect(conditions.waterTemperature.owsSafety == .ideal)
     }
 }

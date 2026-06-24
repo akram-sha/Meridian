@@ -10,7 +10,7 @@ public struct OpenMarineService: MarineService, Sendable {
         self.session = session
     }
 
-    public func fetch(latitude: Double, longitude: Double) async throws -> WaterTemperature {
+    public func fetch(latitude: Double, longitude: Double) async throws -> MarineConditions {
         let url = try buildURL(latitude: latitude, longitude: longitude)
         let (data, response) = try await session.data(from: url)
         let OK = 200
@@ -23,7 +23,7 @@ public struct OpenMarineService: MarineService, Sendable {
         }
 
         let decoded = try JSONDecoder().decode(MarineResponse.self, from: data)
-        return decoded.toWaterTemperature()
+        return decoded.toMarineConditions()
     }
 
     private func buildURL(latitude: Double, longitude: Double) throws -> URL {
@@ -36,7 +36,7 @@ public struct OpenMarineService: MarineService, Sendable {
         components.queryItems = [
             URLQueryItem(name: "latitude",  value: String(privacyLatitude)),
             URLQueryItem(name: "longitude", value: String(privacyLongitude)),
-            URLQueryItem(name: "current",   value: "sea_surface_temperature"),
+            URLQueryItem(name: "current",   value: "sea_surface_temperature,wave_height"),
         ]
 
         guard let url = components.url else {

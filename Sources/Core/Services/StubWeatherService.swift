@@ -5,6 +5,7 @@ public struct StubWeatherService: WeatherService, Sendable {
         WeatherResult(
             airTemperature:   AirTemperature(celsius: 22.5),
             waterTemperature: WaterTemperature(celsius: 18.0),
+            waveHeight:       WaveHeight(metres: 0.3),   // add this
             uvIndex:          UVIndex(value: 6.8),
             windSpeed:        WindSpeed(kmh: 12.0),
             weatherCode:      WeatherCode(raw: 1),
