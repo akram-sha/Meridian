@@ -15,10 +15,12 @@ internal struct OpenMeteoResponse: Decodable {
         }
     }
 
-    func toWeatherResult(waterTemperature: WaterTemperature? = nil) -> WeatherResult {
+    func toWeatherResult(waterTemperature: WaterTemperature? = nil,
+                         waveHeight:       WaveHeight?       = nil) -> WeatherResult {
         WeatherResult(
             airTemperature:   AirTemperature(celsius: current.airTemperature2m),
             waterTemperature: waterTemperature,
+            waveHeight:       waveHeight,
             uvIndex:          UVIndex(value: current.uvIndex),
             windSpeed:        WindSpeed(kmh: current.windSpeed10m),
             weatherCode:      WeatherCode(raw: current.weatherCode),
