@@ -3,7 +3,7 @@ internal struct MarineResponse: Decodable {
 
     struct Current: Decodable {
         let seaSurfaceTemperature: Double
-        let waveHeight:            Double?  // optional: not all locations return it
+        let waveHeight:            Double?  // optional: not all locations return it.
         enum CodingKeys: String, CodingKey {
             case seaSurfaceTemperature = "sea_surface_temperature"
             case waveHeight            = "wave_height"

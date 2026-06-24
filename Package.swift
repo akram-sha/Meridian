@@ -3,14 +3,26 @@ import PackageDescription
 
 let package = Package(
     name: "testApp",
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
+    ],
     targets: [
         .target(
             name: "Core",
             path: "Sources/Core"
         ),
+        .target(
+            name: "Presentation",
+            dependencies: ["Core"],
+            path: "Sources/Presentation"
+        ),
         .executableTarget(
             name: "App",
-            dependencies: ["Core"],
+            dependencies: [
+                "Core",
+                "Presentation",
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
             path: "Sources/App"
         ),
         .testTarget(
@@ -19,9 +31,9 @@ let package = Package(
             path: "Tests/CoreTests"
         ),
         .testTarget(
-            name: "AppTests",
-            dependencies: ["App", "Core"],
-            path: "Tests/AppTests"
+            name: "PresentationTests",
+            dependencies: ["Presentation", "Core"],
+            path: "Tests/PresentationTests"
         ),
     ]
 )

@@ -5,7 +5,7 @@ public struct WeatherCode: Sendable {
         self.raw = raw
     }
 
-    // WMO code 95–99 = thunderstorm (slight, moderate, with hail)
+    // WMO code 95–99 = thunderstorm (slight, moderate, with hail).
     public var isThunderstorm: Bool { raw >= 95 }
 
     public var description: String {

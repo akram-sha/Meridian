@@ -4,7 +4,7 @@ public struct StubMarineService: MarineService, Sendable {
     public func fetch(latitude: Double, longitude: Double) async throws -> MarineConditions {
         MarineConditions(
             waterTemperature: WaterTemperature(celsius: 18.0),
-            waveHeight:       WaveHeight(metres: 0.3)
+            waveHeight:       WaveHeight(metres: 0.3),
         )
     }
 }

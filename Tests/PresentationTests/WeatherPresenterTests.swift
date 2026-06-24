@@ -1,6 +1,6 @@
 import Testing
 @testable import Core
-@testable import App
+@testable import Presentation
 
 @Suite("WeatherPresenter")
 struct WeatherPresenterTests {

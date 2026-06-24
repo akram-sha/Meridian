@@ -28,7 +28,7 @@ public struct OpenMeteoService: WeatherService, Sendable {
         let marineConditions = try? await marineService?.fetch(latitude: latitude, longitude: longitude)
         return decoded.toWeatherResult(
             waterTemperature: marineConditions?.waterTemperature,
-            waveHeight:       marineConditions?.waveHeight
+            waveHeight:       marineConditions?.waveHeight,
         )
     }
 
