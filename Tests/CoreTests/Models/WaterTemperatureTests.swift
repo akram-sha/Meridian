@@ -1,8 +1,26 @@
+import Foundation
 import Testing
 @testable import Core
 
 @Suite("WaterTemperature")
 struct WaterTemperatureTests {
+
+    // MARK: - Decoding validation
+
+    @Test("Decoding a value below absolute zero throws DecodingError")
+    func decodeBelowAbsoluteZeroThrows() {
+        let data = Data(#"{"celsius":-300.0}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(WaterTemperature.self, from: data)
+        }
+    }
+
+    @Test("A valid value round-trips through encode/decode")
+    func validValueRoundTrips() throws {
+        let encoded = try JSONEncoder().encode(WaterTemperature(celsius: 18.0))
+        let decoded = try JSONDecoder().decode(WaterTemperature.self, from: encoded)
+        #expect(decoded.inCelsius == 18.0)
+    }
 
     // MARK: - Unit conversions
 

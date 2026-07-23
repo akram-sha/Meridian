@@ -1,8 +1,26 @@
+import Foundation
 import Testing
 @testable import Core
 
 @Suite("UVIndex")
 struct UVIndexTests {
+
+    // MARK: - Decoding validation
+
+    @Test("Decoding a negative value throws DecodingError")
+    func decodeNegativeThrows() {
+        let data = Data(#"{"raw":-1.0}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(UVIndex.self, from: data)
+        }
+    }
+
+    @Test("A valid value round-trips through encode/decode")
+    func validValueRoundTrips() throws {
+        let encoded = try JSONEncoder().encode(UVIndex(value: 6.8))
+        let decoded = try JSONDecoder().decode(UVIndex.self, from: encoded)
+        #expect(decoded.value == 6.8)
+    }
 
     @Test("Raw value is preserved")
     func rawValueRoundtrip() {

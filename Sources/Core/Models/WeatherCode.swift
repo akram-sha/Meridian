@@ -1,7 +1,8 @@
-public struct WeatherCode: Sendable {
+public struct WeatherCode: Sendable, Codable {
     public let raw: Int
 
     internal init(raw: Int) {
+        precondition(raw >= 0, "WeatherCode must not be negative, got \(raw)")
         self.raw = raw
     }
 
@@ -19,5 +20,16 @@ public struct WeatherCode: Sendable {
         case 95...99:  return "Thunderstorm"
         default:       return "Code \(raw)"
         }
+    }
+
+    private enum CodingKeys: String, CodingKey { case raw }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let raw = try container.decode(Int.self, forKey: .raw)
+        guard raw >= 0 else {
+            throw DecodingError.dataCorruptedError(forKey: .raw, in: container, debugDescription: "WeatherCode must not be negative, got \(raw)")
+        }
+        self.raw = raw
     }
 }

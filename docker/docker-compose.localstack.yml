@@ -1,0 +1,14 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: meridian-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=dynamodb
+      - DEBUG=0
+    volumes:
+      - "localstack-data:/var/lib/localstack"
+
+volumes:
+  localstack-data:

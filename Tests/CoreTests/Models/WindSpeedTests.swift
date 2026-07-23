@@ -1,8 +1,26 @@
+import Foundation
 import Testing
 @testable import Core
 
 @Suite("WindSpeed")
 struct WindSpeedTests {
+
+    // MARK: - Decoding validation
+
+    @Test("Decoding a negative value throws DecodingError")
+    func decodeNegativeThrows() {
+        let data = Data(#"{"kmh":-5.0}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(WindSpeed.self, from: data)
+        }
+    }
+
+    @Test("A valid value round-trips through encode/decode")
+    func validValueRoundTrips() throws {
+        let encoded = try JSONEncoder().encode(WindSpeed(kmh: 12.0))
+        let decoded = try JSONDecoder().decode(WindSpeed.self, from: encoded)
+        #expect(decoded.inKmh == 12.0)
+    }
 
     // MARK: — Unit conversions
     @Test("km/h roundtrip")
