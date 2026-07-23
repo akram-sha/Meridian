@@ -1,18 +1,28 @@
 public struct ForecastCoordinator: Sendable {
     private let weatherService: any WeatherService
+    private let cache: any ForecastCache
 
-    public init(weatherService: any WeatherService) {
+    public init(weatherService: any WeatherService, cache: any ForecastCache = InMemoryForecastCache()) {
         self.weatherService = weatherService
+        self.cache = cache
     }
 
     public func fetch(locations: [Location]) async -> [LocationForecast] {
         await withTaskGroup(of: LocationForecast?.self) { group in
             for location in locations {
                 group.addTask {
+                    let key = ForecastCacheKey(latitude: location.latitude, longitude: location.longitude)
+
+                    if let cached = await self.cache.result(for: key) {
+                        return LocationForecast(location: location, result: cached)
+                    }
+
                     guard let result = try? await self.weatherService.fetch(
                         latitude:  location.latitude,
                         longitude: location.longitude
                     ) else { return nil }
+
+                    await self.cache.store(result, for: key)
                     return LocationForecast(location: location, result: result)
                 }
             }

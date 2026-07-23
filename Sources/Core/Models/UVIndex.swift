@@ -1,7 +1,10 @@
-public struct UVIndex: Sendable {
+public struct UVIndex: Sendable, Codable {
     private let raw: Double
 
     internal init(value: Double) {
+        if let error = validateNonNegative(value) {
+            preconditionFailure("UVIndex \(error)")
+        }
         self.raw = value
     }
 
@@ -24,5 +27,16 @@ public struct UVIndex: Sendable {
 
     public enum Severity {
         case low, moderate, high, veryHigh, extreme
+    }
+
+    private enum CodingKeys: String, CodingKey { case raw }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let raw = try container.decode(Double.self, forKey: .raw)
+        if let error = validateNonNegative(raw) {
+            throw DecodingError.dataCorruptedError(forKey: .raw, in: container, debugDescription: "UVIndex \(error)")
+        }
+        self.raw = raw
     }
 }

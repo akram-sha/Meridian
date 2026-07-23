@@ -1,9 +1,12 @@
 import Foundation
 
-public struct WindSpeed: Sendable {
+public struct WindSpeed: Sendable, Codable {
     private let kmh: Double
 
     internal init(kmh: Double) {
+        if let error = validateNonNegative(kmh) {
+            preconditionFailure("WindSpeed \(error)")
+        }
         self.kmh = kmh
     }
 
@@ -30,5 +33,16 @@ public struct WindSpeed: Sendable {
         // Unreachable due to guard.
         default:       return .dangerous
         }
+    }
+
+    private enum CodingKeys: String, CodingKey { case kmh }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let kmh = try container.decode(Double.self, forKey: .kmh)
+        if let error = validateNonNegative(kmh) {
+            throw DecodingError.dataCorruptedError(forKey: .kmh, in: container, debugDescription: "WindSpeed \(error)")
+        }
+        self.kmh = kmh
     }
 }
