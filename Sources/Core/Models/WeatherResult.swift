@@ -1,4 +1,4 @@
-public struct WeatherResult: Sendable {
+public struct WeatherResult: Sendable, Codable {
     public let airTemperature:   AirTemperature
     public let waterTemperature: WaterTemperature?  // nil for inland coordinates or if marine API is unavailable.
     public let waveHeight:       WaveHeight?        // same here.

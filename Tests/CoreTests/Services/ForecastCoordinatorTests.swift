@@ -40,6 +40,22 @@ struct SelectiveFailureService: WeatherService, Sendable {
     }
 }
 
+// Counts invocations so tests can assert whether the network was actually hit,
+// as opposed to a result being served from cache.
+actor CallCountingService: WeatherService {
+    private(set) var callCount = 0
+
+    func fetch(latitude: Double, longitude: Double) async throws -> WeatherResult {
+        callCount += 1
+        return WeatherResult(
+            airTemperature: AirTemperature(celsius: latitude),
+            uvIndex:        UVIndex(value: 0),
+            windSpeed:      WindSpeed(kmh: 0),
+            weatherCode:    WeatherCode(raw: 1),
+        )
+    }
+}
+
 // MARK: - Suite
 
 @Suite("ForecastCoordinator")
@@ -117,5 +133,58 @@ struct ForecastCoordinatorTests {
 
         #expect(forecasts.count == 1)
         #expect(forecasts.first?.location.name == "Success")
+    }
+
+    // MARK: - Caching
+
+    @Test("A second fetch for the same coordinates does not hit the service again")
+    func secondFetchForSameCoordinatesIsServedFromCache() async {
+        let service     = CallCountingService()
+        let coordinator = ForecastCoordinator(weatherService: service, cache: InMemoryForecastCache())
+        let location    = Location(name: "Zandvoort", latitude: 52.37, longitude: 4.53)
+
+        _ = await coordinator.fetch(locations: [location])
+        _ = await coordinator.fetch(locations: [location])
+
+        #expect(await service.callCount == 1)
+    }
+
+    @Test("Cache hits by coordinates, not by Location.id — two distinct Location values at the same spot share a cache entry")
+    func cacheHitsAcrossDistinctLocationValues() async {
+        // Location.init mints a fresh random UUID every call, including for identical
+        // coordinates. A cache keyed on Location.id would never hit across two separate
+        // requests for the same beach — this pins that the key is coordinate-derived instead.
+        let service     = CallCountingService()
+        let coordinator = ForecastCoordinator(weatherService: service, cache: InMemoryForecastCache())
+
+        let firstRequest  = Location(name: "Zandvoort", latitude: 52.37, longitude: 4.53)
+        let secondRequest = Location(name: "Zandvoort", latitude: 52.37, longitude: 4.53)
+        #expect(firstRequest.id != secondRequest.id)
+
+        _ = await coordinator.fetch(locations: [firstRequest])
+        _ = await coordinator.fetch(locations: [secondRequest])
+
+        #expect(await service.callCount == 1)
+    }
+
+    @Test("A stored cache entry is used instead of calling the service")
+    func prePopulatedCacheIsUsed() async {
+        let cache = InMemoryForecastCache()
+        let key   = ForecastCacheKey(latitude: 52.37, longitude: 4.53)
+        await cache.store(
+            WeatherResult(
+                airTemperature: AirTemperature(celsius: 99.0),
+                uvIndex:        UVIndex(value: 0),
+                windSpeed:      WindSpeed(kmh: 0),
+                weatherCode:    WeatherCode(raw: 1),
+            ),
+            for: key
+        )
+
+        let coordinator = ForecastCoordinator(weatherService: AlwaysFailingService(), cache: cache)
+        let location     = Location(name: "Zandvoort", latitude: 52.37, longitude: 4.53)
+        let forecasts    = await coordinator.fetch(locations: [location])
+
+        #expect(forecasts.first?.result.airTemperature.inCelsius == 99.0)
     }
 }

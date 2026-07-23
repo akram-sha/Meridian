@@ -5,6 +5,12 @@
 # CLion
 .idea/
 
+# Cursor, VSCode, etc.
+.vscode/
+.cursor/
+.cursorrules
+misc/
+
 # Xcode
 *.xcodeproj
 *.xcworkspace
@@ -19,5 +25,3 @@ DerivedData/
 
 # Secrets
 .env
-
-*.md

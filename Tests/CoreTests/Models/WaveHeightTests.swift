@@ -1,7 +1,23 @@
+import Foundation
 import Testing
 @testable import Core
 
 struct WaveHeightTests {
+
+    // MARK: - Decoding validation
+
+    @Test func decodeNegativeMetresThrows() {
+        let data = Data(#"{"metres":-0.5}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(WaveHeight.self, from: data)
+        }
+    }
+
+    @Test func validValueRoundTripsThroughEncodeDecode() throws {
+        let encoded = try JSONEncoder().encode(WaveHeight(metres: 0.3))
+        let decoded = try JSONDecoder().decode(WaveHeight.self, from: encoded)
+        #expect(decoded.inMetres == 0.3)
+    }
 
     // MARK: swimmingSafety — lower-bound boundaries
     // Each test pins the exact value where the category flips,

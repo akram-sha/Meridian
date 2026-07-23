@@ -1,8 +1,26 @@
+import Foundation
 import Testing
 @testable import Core
 
 @Suite("AirTemperature")
 struct AirTemperatureTests {
+
+    // MARK: - Decoding validation
+
+    @Test("Decoding a value below absolute zero throws DecodingError")
+    func decodeBelowAbsoluteZeroThrows() {
+        let data = Data(#"{"celsius":-300.0}"#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(AirTemperature.self, from: data)
+        }
+    }
+
+    @Test("A valid value round-trips through encode/decode")
+    func validValueRoundTrips() throws {
+        let encoded = try JSONEncoder().encode(AirTemperature(celsius: 22.5))
+        let decoded = try JSONDecoder().decode(AirTemperature.self, from: encoded)
+        #expect(decoded.inCelsius == 22.5)
+    }
 
     @Test("Celsius returns stored value unchanged")
     func celsiusRoundtrip() {
