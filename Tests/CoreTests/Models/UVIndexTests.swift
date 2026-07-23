@@ -50,6 +50,15 @@ struct UVIndexTests {
         #expect(UVIndex(value: 6.0).severity == .high)
     }
 
+    // Previously untested: nothing pinned the high/veryHigh boundary from the "high" side
+    // (only veryHighLowerBoundary below tests 8.0 from the veryHigh side). A mutation
+    // narrowing `case 6..<8` to e.g. `6..<7` would have fallen through to the
+    // "unreachable" default branch (.extreme) for 7.9, and no existing test would catch it.
+    @Test("7.9 is still high, not veryHigh")
+    func highUpperBoundary() {
+        #expect(UVIndex(value: 7.9).severity == .high)
+    }
+
     @Test("UV above 8 and less than 11 is very high")
     func veryHighLowerBoundary() {
         #expect(UVIndex(value: 8.0).severity  == .veryHigh)
