@@ -210,9 +210,9 @@ struct WindSpeedRuleTests {
 struct WaveHeightRuleTests {
     let rule = WaveHeightRule()
 
-    private func expectedPrefix(forMetres metres: Double) -> String {
-        let wave = WaveHeight(metres: metres)
-        return "Wave height \(f(wave.inMetres)) m (\(f(wave.inFeet)) ft)"
+    private func expectedPrefix(forMeters meters: Double) -> String {
+        let wave = WaveHeight(meters: meters)
+        return "Wave height \(f(wave.inMeters)) m (\(f(wave.inFeet)) ft)"
     }
 
     @Test("Nil wave height is nil (no opinion)")
@@ -222,24 +222,24 @@ struct WaveHeightRuleTests {
 
     @Test("Calm wave height is nil")
     func calmIsNil() {
-        #expect(rule.evaluate(weather(waveHeight: WaveHeight(metres: 0.3))) == nil)
+        #expect(rule.evaluate(weather(waveHeight: WaveHeight(meters: 0.3))) == nil)
     }
 
-    @Test("Moderate wave height is caution, with correctly formatted metres/feet")
+    @Test("Moderate wave height is caution, with correctly formatted meters/feet")
     func moderateIsCaution() {
-        let reasons = cautionReasons(rule.evaluate(weather(waveHeight: WaveHeight(metres: 0.7))))
-        #expect(reasons == ["\(expectedPrefix(forMetres: 0.7)) — surface chop"])
+        let reasons = cautionReasons(rule.evaluate(weather(waveHeight: WaveHeight(meters: 0.7))))
+        #expect(reasons == ["\(expectedPrefix(forMeters: 0.7)) — surface chop"])
     }
 
     @Test("Concerning wave height is caution, mentioning rough conditions")
     func concerningIsCaution() {
-        let reasons = cautionReasons(rule.evaluate(weather(waveHeight: WaveHeight(metres: 1.5))))
-        #expect(reasons == ["\(expectedPrefix(forMetres: 1.5)) — rough conditions"])
+        let reasons = cautionReasons(rule.evaluate(weather(waveHeight: WaveHeight(meters: 1.5))))
+        #expect(reasons == ["\(expectedPrefix(forMeters: 1.5)) — rough conditions"])
     }
 
     @Test("Dangerous wave height is noGo, mentioning dangerous swell")
     func dangerousIsNoGo() {
-        let reasons = noGoReasons(rule.evaluate(weather(waveHeight: WaveHeight(metres: 2.5))))
-        #expect(reasons == ["\(expectedPrefix(forMetres: 2.5)) — dangerous swell"])
+        let reasons = noGoReasons(rule.evaluate(weather(waveHeight: WaveHeight(meters: 2.5))))
+        #expect(reasons == ["\(expectedPrefix(forMeters: 2.5)) — dangerous swell"])
     }
 }

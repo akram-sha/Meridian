@@ -79,7 +79,7 @@ Sources/
   App/                     — CLI entry point (ArgumentParser)
   DynamoDBForecastCache/   — DynamoDB-backed ForecastCache adapter (not imported by App)
 Tests/
-  CoreTests/               — rule boundary tests, service layer, model behaviour
+  CoreTests/               — rule boundary tests, service layer, model behavior
   PresentationTests/
   DynamoDBForecastCacheTests/  — gated behind MERIDIAN_LOCALSTACK_TESTS=1, needs LocalStack
 ```
@@ -118,7 +118,7 @@ Coordinates are rounded to two decimal places (~1 km precision) before any API c
 
 ## Testing
 
-130 tests, test-driven throughout. Tests cover rule boundary conditions (exact threshold values for temperature, UV, wind, and wave height), verdict aggregation logic, `ForecastCoordinator` concurrent fetch and cache behaviour, value-object decode validation, and `WeatherPresenter` output formatting. Protocol-based service abstractions (`WeatherService`, `MarineService`, `ForecastCache`) mean all rule, coordinator, and cache tests run against stubs with no network or infrastructure dependency. A separate `DynamoDBForecastCacheTests` suite (3 tests) exercises the real DynamoDB adapter against a LocalStack container — gated behind `MERIDIAN_LOCALSTACK_TESTS=1` so plain `swift test` never requires Docker; see `docker/`.
+130 tests, test-driven throughout. Tests cover rule boundary conditions (exact threshold values for temperature, UV, wind, and wave height), verdict aggregation logic, `ForecastCoordinator` concurrent fetch and cache behavior, value-object decode validation, and `WeatherPresenter` output formatting. Protocol-based service abstractions (`WeatherService`, `MarineService`, `ForecastCache`) mean all rule, coordinator, and cache tests run against stubs with no network or infrastructure dependency. A separate `DynamoDBForecastCacheTests` suite (3 tests) exercises the real DynamoDB adapter against a LocalStack container — gated behind `MERIDIAN_LOCALSTACK_TESTS=1` so plain `swift test` never requires Docker; see `docker/`.
 
 ---
 

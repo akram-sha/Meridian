@@ -28,7 +28,7 @@ public struct WindSpeed: Sendable, Codable {
         switch kmh {
         case 0..<15:   return .calm          // Beaufort 0–2: No effect on swimmers.
         case 15..<28:  return .moderate      // Beaufort 3–4: Surface chop developing.
-        case 28..<39:  return .concerning    // Beaufort 4–5: Organized swims cancelled.
+        case 28..<39:  return .concerning    // Beaufort 4–5: Organized swims canceled.
 
         // Unreachable due to guard.
         default:       return .dangerous

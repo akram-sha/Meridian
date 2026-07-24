@@ -1,19 +1,19 @@
 public struct WaveHeight: Sendable, Codable {
-    private let metres: Double
+    private let meters: Double
 
-    internal init(metres: Double) {
-        if let error = validateNonNegative(metres) {
+    internal init(meters: Double) {
+        if let error = validateNonNegative(meters) {
             preconditionFailure("WaveHeight \(error)")
         }
-        self.metres = metres
+        self.meters = meters
     }
 
     private static let feetRatio: Double = 3.28084
-    public var inMetres: Double { metres }
-    public var inFeet:   Double { metres * Self.feetRatio }
+    public var inMeters:          Double { meters }
+    public var inFeet:            Double { meters * Self.feetRatio }
 
     public var swimmingSafety: SwimmingSafety {
-        switch metres {
+        switch meters {
         case ..<0.5:  return .calm
         case 0.5..<1: return .moderate
         case 1..<2:   return .concerning
@@ -21,14 +21,14 @@ public struct WaveHeight: Sendable, Codable {
         }
     }
 
-    private enum CodingKeys: String, CodingKey { case metres }
+    private enum CodingKeys: String, CodingKey { case meters }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let metres = try container.decode(Double.self, forKey: .metres)
-        if let error = validateNonNegative(metres) {
-            throw DecodingError.dataCorruptedError(forKey: .metres, in: container, debugDescription: "WaveHeight \(error)")
+        let meters = try container.decode(Double.self, forKey: .meters)
+        if let error = validateNonNegative(meters) {
+            throw DecodingError.dataCorruptedError(forKey: .meters, in: container, debugDescription: "WaveHeight \(error)")
         }
-        self.metres = metres
+        self.meters = meters
     }
 }

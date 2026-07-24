@@ -100,15 +100,15 @@ internal struct WaveHeightRule: SwimmingRule {
         switch wave.swimmingSafety {
         case .dangerous:
             return .noGo(reasons: [
-                "Wave height \(f(wave.inMetres)) m (\(f(wave.inFeet)) ft) — dangerous swell"
+                "Wave height \(f(wave.inMeters)) m (\(f(wave.inFeet)) ft) — dangerous swell"
             ])
         case .concerning:
             return .caution(reasons: [
-                "Wave height \(f(wave.inMetres)) m (\(f(wave.inFeet)) ft) — rough conditions"
+                "Wave height \(f(wave.inMeters)) m (\(f(wave.inFeet)) ft) — rough conditions"
             ])
         case .moderate:
             return .caution(reasons: [
-                "Wave height \(f(wave.inMetres)) m (\(f(wave.inFeet)) ft) — surface chop"
+                "Wave height \(f(wave.inMeters)) m (\(f(wave.inFeet)) ft) — surface chop"
             ])
         case .calm:
             return nil

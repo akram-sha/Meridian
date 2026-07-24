@@ -49,7 +49,7 @@ struct MarineServiceTests {
 
         let decoded    = try JSONDecoder().decode(MarineResponse.self, from: json)
         let conditions = decoded.toMarineConditions()
-        #expect(abs((conditions.waveHeight?.inMetres ?? -1) - 1.2) < 0.0001)
+        #expect(abs((conditions.waveHeight?.inMeters ?? -1) - 1.2) < 0.0001)
     }
 
     @Test("toMarineConditions wave height is nil when absent from JSON")
