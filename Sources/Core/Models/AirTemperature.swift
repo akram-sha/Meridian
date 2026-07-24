@@ -4,7 +4,7 @@ public struct AirTemperature: Sendable, Codable {
     private let celsius: Double
 
     internal init(celsius: Double) {
-        if let error = validatePhysical(celsius, atLeast: Self.absoluteZero) {
+        if let error: PhysicalBoundsError = validatePhysical(celsius, atLeast: Self.absoluteZero) {
             preconditionFailure("AirTemperature \(error)")
         }
         self.celsius = celsius
