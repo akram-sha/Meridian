@@ -1,17 +1,17 @@
-/// Cache key derived from coordinates, not from `Location.id`.
+/// Cache key derived from a validated, privacy-rounded `Coordinate` — never from
+/// `Location` identity or any per-request-unique value, so repeated queries for the
+/// same beach share an entry. Coordinate rounding (~1 km) doubles as the cache
+/// granularity, and no key ever carries higher precision than what is already sent
+/// to third-party APIs.
 ///
-/// `Location.init` mints a fresh random `UUID` on every call, including for two requests
-/// carrying the same coordinates — keying a cache on `Location.id` would never hit. Rounding
-/// to two decimal places (~1 km) reuses the same precision already applied before any
-/// third-party API call, so nearby requests share a cache entry and no request ever
-/// contributes higher-precision coordinates than a cache key already carries.
+/// A wrapper type (rather than `Coordinate` used directly) so future key dimensions
+/// — e.g. per-activity caching — extend this struct without changing the
+/// `ForecastCache` protocol.
 public struct ForecastCacheKey: Sendable, Hashable {
-    public let latitude:  Double
-    public let longitude: Double
+    public let coordinate: Coordinate
 
-    public init(latitude: Double, longitude: Double) {
-        self.latitude  = (latitude  * 100).rounded() / 100
-        self.longitude = (longitude * 100).rounded() / 100
+    public init(coordinate: Coordinate) {
+        self.coordinate = coordinate
     }
 }
 

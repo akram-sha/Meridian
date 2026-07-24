@@ -31,8 +31,25 @@ struct LiveServiceHTTPHandlingTests {
             return (response, validWeatherBody)
         }
         let service = OpenMeteoService(session: MockURLProtocol.makeSession())
-        let result  = try await service.fetch(latitude: 52.37, longitude: 4.53)
+        let result  = try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         #expect(result.airTemperature.inCelsius == 20.0)
+    }
+
+    @Test("OpenMeteoService: outbound URL carries only canonical two-decimal coordinates")
+    func weatherURLUsesCanonicalCoordinates() async throws {
+        // The privacy guarantee end to end: a Coordinate built from precise input
+        // must reach the wire as its rounded canonical form, nothing finer.
+        MockURLProtocol.handler = { [validWeatherBody] request in
+            let query = request.url?.query ?? ""
+            #expect(query.contains("latitude=52.37"))
+            #expect(query.contains("longitude=4.53"))
+            #expect(!query.contains("52.3717"))
+            #expect(!query.contains("4.5333"))
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, validWeatherBody)
+        }
+        let service = OpenMeteoService(session: MockURLProtocol.makeSession())
+        _ = try await service.fetch(coordinate: try Coordinate(latitude: 52.3717, longitude: 4.5333))
     }
 
     @Test("OpenMeteoService: non-200 status throws httpError with the actual status code")
@@ -43,7 +60,7 @@ struct LiveServiceHTTPHandlingTests {
         }
         let service = OpenMeteoService(session: MockURLProtocol.makeSession())
         await #expect(throws: OpenMeteoService.ServiceError.httpError(statusCode: 503)) {
-            try await service.fetch(latitude: 52.37, longitude: 4.53)
+            try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         }
     }
 
@@ -55,7 +72,7 @@ struct LiveServiceHTTPHandlingTests {
         }
         let service = OpenMeteoService(session: MockURLProtocol.makeSession())
         await #expect(throws: OpenMeteoService.ServiceError.invalidResponse) {
-            try await service.fetch(latitude: 52.37, longitude: 4.53)
+            try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         }
     }
 
@@ -67,7 +84,7 @@ struct LiveServiceHTTPHandlingTests {
         }
         let service = OpenMeteoService(session: MockURLProtocol.makeSession())
         await #expect(throws: DecodingError.self) {
-            try await service.fetch(latitude: 52.37, longitude: 4.53)
+            try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         }
     }
 
@@ -82,7 +99,7 @@ struct LiveServiceHTTPHandlingTests {
             return (response, validMarineBody)
         }
         let service = OpenMarineService(session: MockURLProtocol.makeSession())
-        let result  = try await service.fetch(latitude: 52.37, longitude: 4.53)
+        let result  = try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         #expect(result.waterTemperature.inCelsius == 18.0)
     }
 
@@ -94,7 +111,7 @@ struct LiveServiceHTTPHandlingTests {
         }
         let service = OpenMarineService(session: MockURLProtocol.makeSession())
         await #expect(throws: OpenMarineService.ServiceError.httpError(statusCode: 500)) {
-            try await service.fetch(latitude: 52.37, longitude: 4.53)
+            try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         }
     }
 
@@ -106,7 +123,7 @@ struct LiveServiceHTTPHandlingTests {
         }
         let service = OpenMarineService(session: MockURLProtocol.makeSession())
         await #expect(throws: OpenMarineService.ServiceError.invalidResponse) {
-            try await service.fetch(latitude: 52.37, longitude: 4.53)
+            try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         }
     }
 
@@ -118,7 +135,7 @@ struct LiveServiceHTTPHandlingTests {
         }
         let service = OpenMarineService(session: MockURLProtocol.makeSession())
         await #expect(throws: DecodingError.self) {
-            try await service.fetch(latitude: 52.37, longitude: 4.53)
+            try await service.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
         }
     }
 }

@@ -10,8 +10,8 @@ public struct OpenMarineService: MarineService, Sendable {
         self.session = session
     }
 
-    public func fetch(latitude: Double, longitude: Double) async throws -> MarineConditions {
-        let url = try buildURL(latitude: latitude, longitude: longitude)
+    public func fetch(coordinate: Coordinate) async throws -> MarineConditions {
+        let url = try buildURL(coordinate: coordinate)
         let (data, response) = try await session.data(from: url)
         let OK = 200
 
@@ -26,16 +26,16 @@ public struct OpenMarineService: MarineService, Sendable {
         return decoded.toMarineConditions()
     }
 
-    private func buildURL(latitude: Double, longitude: Double) throws -> URL {
-        let privacyLatitude  = (latitude  * 100).rounded() / 100
-        let privacyLongitude = (longitude * 100).rounded() / 100
+    private func buildURL(coordinate: Coordinate) throws -> URL {
+        // Coordinate is privacy-rounded at construction; only its canonical
+        // two-decimal strings ever leave the process.
         var components = URLComponents()
         components.scheme = "https"
         components.host   = "marine-api.open-meteo.com"
         components.path   = "/v1/marine"
         components.queryItems = [
-            URLQueryItem(name: "latitude",  value: String(privacyLatitude)),
-            URLQueryItem(name: "longitude", value: String(privacyLongitude)),
+            URLQueryItem(name: "latitude",  value: coordinate.canonicalLatitude),
+            URLQueryItem(name: "longitude", value: coordinate.canonicalLongitude),
             URLQueryItem(name: "current",   value: "sea_surface_temperature,wave_height"),
         ]
 

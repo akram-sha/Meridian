@@ -1,7 +1,7 @@
 public struct StubWeatherService: WeatherService, Sendable {
     public init() {}
 
-    public func fetch(latitude: Double, longitude: Double) async throws -> WeatherResult {
+    public func fetch(coordinate: Coordinate) async throws -> WeatherResult {
         WeatherResult(
             airTemperature:   AirTemperature(celsius: 22.5),
             waterTemperature: WaterTemperature(celsius: 18.0),

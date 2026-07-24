@@ -16,7 +16,7 @@ struct App: AsyncParsableCommand {
     mutating func run() async throws {
         let service:     OpenMeteoService    = OpenMeteoService(marineService: OpenMarineService())
         let coordinator: ForecastCoordinator = ForecastCoordinator(weatherService: service)
-        let location:    Location            = Location(name: name, latitude: latitude, longitude: longitude)
+        let location:    Location            = try Location(name: name, latitude: latitude, longitude: longitude)
         let forecasts:   [LocationForecast]  = await coordinator.fetch(locations: [location])
 
         let presenter: WeatherPresenter = WeatherPresenter()

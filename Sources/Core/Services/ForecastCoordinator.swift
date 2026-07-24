@@ -11,15 +11,14 @@ public struct ForecastCoordinator: Sendable {
         await withTaskGroup(of: LocationForecast?.self) { group in
             for location in locations {
                 group.addTask {
-                    let key = ForecastCacheKey(latitude: location.latitude, longitude: location.longitude)
+                    let key = ForecastCacheKey(coordinate: location.coordinate)
 
                     if let cached = await self.cache.result(for: key) {
                         return LocationForecast(location: location, result: cached)
                     }
 
                     guard let result = try? await self.weatherService.fetch(
-                        latitude:  location.latitude,
-                        longitude: location.longitude
+                        coordinate: location.coordinate
                     ) else { return nil }
 
                     await self.cache.store(result, for: key)

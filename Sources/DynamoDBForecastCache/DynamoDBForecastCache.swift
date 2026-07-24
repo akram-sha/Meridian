@@ -60,6 +60,9 @@ public struct DynamoDBForecastCache: ForecastCache, Sendable {
     }
 
     private static func partitionKey(for key: ForecastCacheKey) -> String {
-        "coord#\(key.latitude)_\(key.longitude)"
+        // Canonical fixed two-decimal strings, not Double interpolation — Double's
+        // description is coupled to Swift's shortest-round-trip algorithm and would
+        // key "-0.0" and "0.0" differently.
+        "coord#\(key.coordinate.canonicalLatitude)_\(key.coordinate.canonicalLongitude)"
     }
 }
