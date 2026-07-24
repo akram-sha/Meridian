@@ -67,6 +67,21 @@ struct DynamoDBForecastCacheTests {
         }
     }
 
+    @Test("Expired-but-undeleted item is treated as a miss")
+    func expiredItemIsAMiss() async throws {
+        // DynamoDB's TTL sweep is lazy — an expired item can survive in the table for
+        // hours. A negative ttl stores an already-expired item; the read-side expiry
+        // check must treat it as a miss rather than serving a stale forecast.
+        try await withClient { dynamoDB in
+            let cache = DynamoDBForecastCache(client: dynamoDB, tableName: tableName, ttl: -60)
+            let key   = ForecastCacheKey(latitude: 3.0, longitude: 4.0)
+
+            await cache.store(Self.sampleResult, for: key)
+
+            #expect(await cache.result(for: key) == nil)
+        }
+    }
+
     @Test("Stored item carries a ttl attribute in the future")
     func storedItemCarriesTTL() async throws {
         try await withClient { dynamoDB in

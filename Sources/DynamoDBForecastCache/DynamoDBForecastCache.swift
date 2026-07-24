@@ -14,11 +14,14 @@ public struct DynamoDBForecastCache: ForecastCache, Sendable {
     private let client: DynamoDB
     private let tableName: String
     private let ttl: TimeInterval
+    private let now: @Sendable () -> Date
 
-    public init(client: DynamoDB, tableName: String, ttl: TimeInterval = 15 * 60) {
+    public init(client: DynamoDB, tableName: String, ttl: TimeInterval = 15 * 60,
+                now: @escaping @Sendable () -> Date = Date.init) {
         self.client = client
         self.tableName = tableName
         self.ttl = ttl
+        self.now = now
     }
 
     public func result(for key: ForecastCacheKey) async -> WeatherResult? {
@@ -30,6 +33,13 @@ public struct DynamoDBForecastCache: ForecastCache, Sendable {
         guard let item = response.item,
               case .s(let payload) = item["payload"] else { return nil }
 
+        // DynamoDB TTL deletion is lazy (it can lag expiry by up to ~48 hours) and
+        // GetItem still returns expired-but-undeleted items, so expiry has to be
+        // enforced on read — mirroring InMemoryForecastCache's read-side check.
+        guard case .n(let ttlString) = item["ttl"],
+              let expiresAt = Double(ttlString),
+              expiresAt > now().timeIntervalSince1970 else { return nil }
+
         return try? JSONDecoder().decode(WeatherResult.self, from: Data(payload.utf8))
     }
 
@@ -37,7 +47,7 @@ public struct DynamoDBForecastCache: ForecastCache, Sendable {
         guard let payload = try? JSONEncoder().encode(result),
               let payloadString = String(data: payload, encoding: .utf8) else { return }
 
-        let expiresAt = Int(Date().addingTimeInterval(ttl).timeIntervalSince1970)
+        let expiresAt = Int(now().addingTimeInterval(ttl).timeIntervalSince1970)
 
         _ = try? await client.putItem(
             item: [
