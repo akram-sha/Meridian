@@ -17,11 +17,16 @@ struct App: AsyncParsableCommand {
         let service:     OpenMeteoService    = OpenMeteoService(marineService: OpenMarineService())
         let coordinator: ForecastCoordinator = ForecastCoordinator(weatherService: service)
         let location:    Location            = try Location(name: name, latitude: latitude, longitude: longitude)
-        let forecasts:   [LocationForecast]  = await coordinator.fetch(locations: [location])
+        let outcomes                         = await coordinator.fetch(locations: [location])
 
         let presenter: WeatherPresenter = WeatherPresenter()
-        for forecast: LocationForecast in forecasts {
-            print(presenter.present(forecast.result))
+        for (location, outcome) in zip([location], outcomes) {
+            switch outcome {
+            case .success(let forecast):
+                print(presenter.present(forecast.result))
+            case .failure(let error):
+                print("Could not fetch forecast for \(location.name): \(error)")
+            }
         }
     }
 }
