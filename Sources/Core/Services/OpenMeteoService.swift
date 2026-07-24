@@ -24,8 +24,8 @@ public struct OpenMeteoService: WeatherService, Sendable {
             throw ServiceError.httpError(statusCode: http.statusCode)
         }
 
-        let decoded   = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
-        let marineConditions = try? await marineService?.fetch(latitude: latitude, longitude: longitude)
+        let decoded: OpenMeteoResponse          = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
+        let marineConditions: MarineConditions? = try? await marineService?.fetch(latitude: latitude, longitude: longitude)
         return decoded.toWeatherResult(
             waterTemperature: marineConditions?.waterTemperature,
             waveHeight:       marineConditions?.waveHeight,
@@ -34,13 +34,13 @@ public struct OpenMeteoService: WeatherService, Sendable {
 
     private func buildURL(latitude: Double, longitude: Double) throws -> URL {
         // Blur exact location to keep user data private.
-        let privacyLatitude  = (latitude  * 100).rounded() / 100
-        let privacyLongitude = (longitude * 100).rounded() / 100
+        let privacyLatitude:  Double = (latitude  * 100).rounded() / 100
+        let privacyLongitude: Double = (longitude * 100).rounded() / 100
 
-        var components    = URLComponents()
-        components.scheme = "https"
-        components.host   = "api.open-meteo.com"
-        components.path   = "/v1/forecast"
+        var components: URLComponents = URLComponents()
+        components.scheme     = "https"
+        components.host       = "api.open-meteo.com"
+        components.path       = "/v1/forecast"
         components.queryItems = [
             URLQueryItem(name: "latitude",  value: String(privacyLatitude)),
             URLQueryItem(name: "longitude", value: String(privacyLongitude)),

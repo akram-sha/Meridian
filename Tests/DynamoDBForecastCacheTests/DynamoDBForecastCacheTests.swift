@@ -58,12 +58,12 @@ struct DynamoDBForecastCacheTests {
             await cache.store(Self.sampleResult, for: key)
             let cached = await cache.result(for: key)
 
-            #expect(cached?.airTemperature.inCelsius == 22.5)
+            #expect(cached?.airTemperature.inCelsius    == 22.5)
             #expect(cached?.waterTemperature?.inCelsius == 18.0)
-            #expect(cached?.waveHeight?.inMeters == 0.3)
-            #expect(cached?.uvIndex.value == 6.8)
-            #expect(cached?.windSpeed.inKmh == 12.0)
-            #expect(cached?.weatherCode.raw == 1)
+            #expect(cached?.waveHeight?.inMeters        == 0.3)
+            #expect(cached?.uvIndex.value               == 6.8)
+            #expect(cached?.windSpeed.inKmh             == 12.0)
+            #expect(cached?.weatherCode.raw             == 1)
         }
     }
 

@@ -14,13 +14,13 @@ struct App: AsyncParsableCommand {
     var longitude: Double
 
     mutating func run() async throws {
-        let service     = OpenMeteoService(marineService: OpenMarineService())
-        let coordinator = ForecastCoordinator(weatherService: service)
-        let location    = Location(name: name, latitude: latitude, longitude: longitude)
-        let forecasts   = await coordinator.fetch(locations: [location])
+        let service:     OpenMeteoService    = OpenMeteoService(marineService: OpenMarineService())
+        let coordinator: ForecastCoordinator = ForecastCoordinator(weatherService: service)
+        let location:    Location            = Location(name: name, latitude: latitude, longitude: longitude)
+        let forecasts:   [LocationForecast]  = await coordinator.fetch(locations: [location])
 
-        let presenter = WeatherPresenter()
-        for forecast in forecasts {
+        let presenter: WeatherPresenter = WeatherPresenter()
+        for forecast: LocationForecast in forecasts {
             print(presenter.present(forecast.result))
         }
     }
