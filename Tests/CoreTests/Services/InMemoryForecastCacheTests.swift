@@ -11,6 +11,11 @@ final class TestClock: @unchecked Sendable {
     func advance(by seconds: TimeInterval) { date = date.addingTimeInterval(seconds) }
 }
 
+// Shorthand for building a cache key from raw degrees in these tests.
+private func cacheKey(_ latitude: Double, _ longitude: Double) throws -> ForecastCacheKey {
+    ForecastCacheKey(coordinate: try Coordinate(latitude: latitude, longitude: longitude))
+}
+
 @Suite("InMemoryForecastCache")
 struct InMemoryForecastCacheTests {
 
@@ -24,16 +29,16 @@ struct InMemoryForecastCacheTests {
     // MARK: - Basic get/store
 
     @Test("Miss on an empty cache")
-    func missOnEmptyCache() async {
+    func missOnEmptyCache() async throws {
         let cache = InMemoryForecastCache()
-        let key   = ForecastCacheKey(latitude: 52.37, longitude: 4.53)
+        let key   = try cacheKey(52.37, 4.53)
         #expect(await cache.result(for: key) == nil)
     }
 
     @Test("Hit after store")
-    func hitAfterStore() async {
+    func hitAfterStore() async throws {
         let cache = InMemoryForecastCache()
-        let key   = ForecastCacheKey(latitude: 52.37, longitude: 4.53)
+        let key   = try cacheKey(52.37, 4.53)
         await cache.store(Self.sampleResult, for: key)
 
         let cached = await cache.result(for: key)
@@ -43,10 +48,10 @@ struct InMemoryForecastCacheTests {
     // MARK: - TTL expiry
 
     @Test("Entry is still fresh just before TTL elapses")
-    func freshJustBeforeTTL() async {
+    func freshJustBeforeTTL() async throws {
         let clock = TestClock(.init(timeIntervalSince1970: 0))
         let cache = InMemoryForecastCache(ttl: 60, now: { clock.date })
-        let key   = ForecastCacheKey(latitude: 52.37, longitude: 4.53)
+        let key   = try cacheKey(52.37, 4.53)
 
         await cache.store(Self.sampleResult, for: key)
         clock.advance(by: 59)
@@ -55,10 +60,10 @@ struct InMemoryForecastCacheTests {
     }
 
     @Test("Entry expires once TTL has elapsed")
-    func expiresAfterTTL() async {
+    func expiresAfterTTL() async throws {
         let clock = TestClock(.init(timeIntervalSince1970: 0))
         let cache = InMemoryForecastCache(ttl: 60, now: { clock.date })
-        let key   = ForecastCacheKey(latitude: 52.37, longitude: 4.53)
+        let key   = try cacheKey(52.37, 4.53)
 
         await cache.store(Self.sampleResult, for: key)
         clock.advance(by: 61)
@@ -69,22 +74,22 @@ struct InMemoryForecastCacheTests {
     // MARK: - Key rounding (mirrors the coordinate-rounding privacy rule)
 
     @Test("Coordinates within rounding tolerance share a cache entry")
-    func nearbyCoordinatesShareEntry() async {
+    func nearbyCoordinatesShareEntry() async throws {
         let cache = InMemoryForecastCache()
-        let writeKey = ForecastCacheKey(latitude: 52.3717, longitude: 4.5333)
+        let writeKey = try cacheKey(52.3717, 4.5333)
         await cache.store(Self.sampleResult, for: writeKey)
 
-        let readKey = ForecastCacheKey(latitude: 52.3721, longitude: 4.5328)
+        let readKey = try cacheKey(52.3721, 4.5328)
         #expect(await cache.result(for: readKey) != nil)
     }
 
     @Test("Coordinates a full cell apart do not share a cache entry")
-    func distantCoordinatesDoNotShareEntry() async {
+    func distantCoordinatesDoNotShareEntry() async throws {
         let cache = InMemoryForecastCache()
-        let writeKey = ForecastCacheKey(latitude: 52.37, longitude: 4.53)
+        let writeKey = try cacheKey(52.37, 4.53)
         await cache.store(Self.sampleResult, for: writeKey)
 
-        let readKey = ForecastCacheKey(latitude: 51.50, longitude: 4.90)
+        let readKey = try cacheKey(51.50, 4.90)
         #expect(await cache.result(for: readKey) == nil)
     }
 }

@@ -2,7 +2,7 @@ public struct UVIndex: Sendable, Codable {
     private let raw: Double
 
     internal init(value: Double) {
-        if let error = validateNonNegative(value) {
+        if let error: PhysicalBoundsError = validateNonNegative(value) {
             preconditionFailure("UVIndex \(error)")
         }
         self.raw = value
@@ -34,7 +34,7 @@ public struct UVIndex: Sendable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let raw = try container.decode(Double.self, forKey: .raw)
-        if let error = validateNonNegative(raw) {
+        if let error: PhysicalBoundsError = validateNonNegative(raw) {
             throw DecodingError.dataCorruptedError(forKey: .raw, in: container, debugDescription: "UVIndex \(error)")
         }
         self.raw = raw

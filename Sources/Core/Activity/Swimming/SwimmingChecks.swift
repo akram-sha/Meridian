@@ -18,7 +18,7 @@ internal struct ThunderstormRule: SwimmingRule {
 
 internal struct WaterTemperatureRule: SwimmingRule {
     func evaluate(_ weather: WeatherResult) -> Verdict? {
-        guard let water = weather.waterTemperature else { return nil }
+        guard let water: WaterTemperature = weather.waterTemperature else { return nil }
         switch water.owsSafety {
         case .dangerous:
             return .noGo(reasons: [
@@ -48,7 +48,7 @@ internal struct WaterTemperatureRule: SwimmingRule {
 
 internal struct UVIndexRule: SwimmingRule {
     func evaluate(_ weather: WeatherResult) -> Verdict? {
-        let uv = weather.uvIndex
+        let uv: UVIndex = weather.uvIndex
         switch uv.severity {
         case .extreme:
             return .noGo(reasons: [
@@ -74,7 +74,7 @@ internal struct UVIndexRule: SwimmingRule {
 
 internal struct WindSpeedRule: SwimmingRule {
     func evaluate(_ weather: WeatherResult) -> Verdict? {
-        let wind = weather.windSpeed
+        let wind: WindSpeed = weather.windSpeed
         switch wind.swimmingSafety {
         case .dangerous:
             return .noGo(reasons: [
@@ -96,7 +96,7 @@ internal struct WindSpeedRule: SwimmingRule {
 
 internal struct WaveHeightRule: SwimmingRule {
     func evaluate(_ weather: WeatherResult) -> Verdict? {
-        guard let wave = weather.waveHeight else { return nil }
+        guard let wave: WaveHeight = weather.waveHeight else { return nil }
         switch wave.swimmingSafety {
         case .dangerous:
             return .noGo(reasons: [

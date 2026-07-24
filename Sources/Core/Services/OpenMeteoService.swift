@@ -12,8 +12,8 @@ public struct OpenMeteoService: WeatherService, Sendable {
         self.marineService = marineService
     }
 
-    public func fetch(latitude: Double, longitude: Double) async throws -> WeatherResult {
-        let url = try buildURL(latitude: latitude, longitude: longitude)
+    public func fetch(coordinate: Coordinate) async throws -> WeatherResult {
+        let url = try buildURL(coordinate: coordinate)
         let (data, response) = try await session.data(from: url)
         let OK = 200
 
@@ -24,26 +24,24 @@ public struct OpenMeteoService: WeatherService, Sendable {
             throw ServiceError.httpError(statusCode: http.statusCode)
         }
 
-        let decoded   = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
-        let marineConditions = try? await marineService?.fetch(latitude: latitude, longitude: longitude)
+        let decoded: OpenMeteoResponse          = try JSONDecoder().decode(OpenMeteoResponse.self, from: data)
+        let marineConditions: MarineConditions? = try? await marineService?.fetch(coordinate: coordinate)
         return decoded.toWeatherResult(
             waterTemperature: marineConditions?.waterTemperature,
             waveHeight:       marineConditions?.waveHeight,
         )
     }
 
-    private func buildURL(latitude: Double, longitude: Double) throws -> URL {
-        // Blur exact location to keep user data private.
-        let privacyLatitude  = (latitude  * 100).rounded() / 100
-        let privacyLongitude = (longitude * 100).rounded() / 100
-
-        var components    = URLComponents()
-        components.scheme = "https"
-        components.host   = "api.open-meteo.com"
-        components.path   = "/v1/forecast"
+    private func buildURL(coordinate: Coordinate) throws -> URL {
+        // Coordinate is privacy-rounded at construction; only its canonical
+        // two-decimal strings ever leave the process.
+        var components: URLComponents = URLComponents()
+        components.scheme     = "https"
+        components.host       = "api.open-meteo.com"
+        components.path       = "/v1/forecast"
         components.queryItems = [
-            URLQueryItem(name: "latitude",  value: String(privacyLatitude)),
-            URLQueryItem(name: "longitude", value: String(privacyLongitude)),
+            URLQueryItem(name: "latitude",  value: coordinate.canonicalLatitude),
+            URLQueryItem(name: "longitude", value: coordinate.canonicalLongitude),
             URLQueryItem(name: "current",   value: "temperature_2m,uv_index,wind_speed_10m,weather_code"),
         ]
 

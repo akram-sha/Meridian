@@ -43,7 +43,7 @@ struct DynamoDBForecastCacheTests {
     func missOnUnknownKey() async throws {
         try await withClient { dynamoDB in
             let cache = DynamoDBForecastCache(client: dynamoDB, tableName: tableName)
-            let key   = ForecastCacheKey(latitude: 12.34, longitude: 56.78)
+            let key   = ForecastCacheKey(coordinate: try Coordinate(latitude: 12.34, longitude: 56.78))
 
             #expect(await cache.result(for: key) == nil)
         }
@@ -53,17 +53,32 @@ struct DynamoDBForecastCacheTests {
     func hitAfterStoreRoundTrips() async throws {
         try await withClient { dynamoDB in
             let cache = DynamoDBForecastCache(client: dynamoDB, tableName: tableName)
-            let key   = ForecastCacheKey(latitude: 52.37, longitude: 4.53)
+            let key   = ForecastCacheKey(coordinate: try Coordinate(latitude: 52.37, longitude: 4.53))
 
             await cache.store(Self.sampleResult, for: key)
             let cached = await cache.result(for: key)
 
-            #expect(cached?.airTemperature.inCelsius == 22.5)
+            #expect(cached?.airTemperature.inCelsius    == 22.5)
             #expect(cached?.waterTemperature?.inCelsius == 18.0)
-            #expect(cached?.waveHeight?.inMeters == 0.3)
-            #expect(cached?.uvIndex.value == 6.8)
-            #expect(cached?.windSpeed.inKmh == 12.0)
-            #expect(cached?.weatherCode.raw == 1)
+            #expect(cached?.waveHeight?.inMeters        == 0.3)
+            #expect(cached?.uvIndex.value               == 6.8)
+            #expect(cached?.windSpeed.inKmh             == 12.0)
+            #expect(cached?.weatherCode.raw             == 1)
+        }
+    }
+
+    @Test("Expired-but-undeleted item is treated as a miss")
+    func expiredItemIsAMiss() async throws {
+        // DynamoDB's TTL sweep is lazy — an expired item can survive in the table for
+        // hours. A negative ttl stores an already-expired item; the read-side expiry
+        // check must treat it as a miss rather than serving a stale forecast.
+        try await withClient { dynamoDB in
+            let cache = DynamoDBForecastCache(client: dynamoDB, tableName: tableName, ttl: -60)
+            let key   = ForecastCacheKey(coordinate: try Coordinate(latitude: 3.0, longitude: 4.0))
+
+            await cache.store(Self.sampleResult, for: key)
+
+            #expect(await cache.result(for: key) == nil)
         }
     }
 
@@ -71,11 +86,11 @@ struct DynamoDBForecastCacheTests {
     func storedItemCarriesTTL() async throws {
         try await withClient { dynamoDB in
             let cache = DynamoDBForecastCache(client: dynamoDB, tableName: tableName, ttl: 60)
-            let key   = ForecastCacheKey(latitude: 1.0, longitude: 2.0)
+            let key   = ForecastCacheKey(coordinate: try Coordinate(latitude: 1.0, longitude: 2.0))
             await cache.store(Self.sampleResult, for: key)
 
             let response = try await dynamoDB.getItem(
-                key: ["pk": .s("coord#1.0_2.0")],
+                key: ["pk": .s("coord#1.00_2.00")],
                 tableName: tableName
             )
             guard case .n(let ttlString) = response.item?["ttl"], let ttlValue = Double(ttlString) else {

@@ -2,10 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "testApp",
+    name: "Meridian",
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "7.10.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
     ],
     targets: [
         .target(
@@ -34,6 +35,7 @@ let package = Package(
             dependencies: [
                 "Core",
                 .product(name: "SotoDynamoDB", package: "soto"),
+                .product(name: "Logging", package: "swift-log"),
             ],
             path: "Sources/DynamoDBForecastCache"
         ),

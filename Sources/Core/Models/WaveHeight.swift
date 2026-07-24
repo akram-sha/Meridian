@@ -2,7 +2,7 @@ public struct WaveHeight: Sendable, Codable {
     private let meters: Double
 
     internal init(meters: Double) {
-        if let error = validateNonNegative(meters) {
+        if let error: PhysicalBoundsError = validateNonNegative(meters) {
             preconditionFailure("WaveHeight \(error)")
         }
         self.meters = meters
@@ -26,7 +26,7 @@ public struct WaveHeight: Sendable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let meters = try container.decode(Double.self, forKey: .meters)
-        if let error = validateNonNegative(meters) {
+        if let error: PhysicalBoundsError = validateNonNegative(meters) {
             throw DecodingError.dataCorruptedError(forKey: .meters, in: container, debugDescription: "WaveHeight \(error)")
         }
         self.meters = meters

@@ -2,7 +2,7 @@ public struct WaterTemperature: Sendable, Codable {
     private let celsius: Double
 
     internal init(celsius: Double) {
-        if let error = validatePhysical(celsius, atLeast: Self.absoluteZero) {
+        if let error: PhysicalBoundsError = validatePhysical(celsius, atLeast: Self.absoluteZero) {
             preconditionFailure("WaterTemperature \(error)")
         }
         self.celsius = celsius
@@ -22,7 +22,7 @@ public struct WaterTemperature: Sendable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let celsius = try container.decode(Double.self, forKey: .celsius)
-        if let error = validatePhysical(celsius, atLeast: Self.absoluteZero) {
+        if let error: PhysicalBoundsError = validatePhysical(celsius, atLeast: Self.absoluteZero) {
             throw DecodingError.dataCorruptedError(forKey: .celsius, in: container, debugDescription: "WaterTemperature \(error)")
         }
         self.celsius = celsius

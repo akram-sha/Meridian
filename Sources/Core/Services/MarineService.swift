@@ -1,3 +1,3 @@
 public protocol MarineService: Sendable {
-    func fetch(latitude: Double, longitude: Double) async throws -> MarineConditions
+    func fetch(coordinate: Coordinate) async throws -> MarineConditions
 }

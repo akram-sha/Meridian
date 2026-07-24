@@ -4,7 +4,7 @@ public struct WindSpeed: Sendable, Codable {
     private let kmh: Double
 
     internal init(kmh: Double) {
-        if let error = validateNonNegative(kmh) {
+        if let error: PhysicalBoundsError = validateNonNegative(kmh) {
             preconditionFailure("WindSpeed \(error)")
         }
         self.kmh = kmh
@@ -15,10 +15,10 @@ public struct WindSpeed: Sendable, Codable {
     private static let milesRatio: Double           = 1.609344
     private static let metersPerSecondRatio: Double = 3.6
 
-    public var inKmh: Double   { kmh }
+    public var inKmh:   Double { kmh }
     public var inKnots: Double { kmh / Self.knotsRatio }
-    public var inMph: Double   { kmh / Self.milesRatio }
-    public var inMs: Double    { kmh / Self.metersPerSecondRatio }
+    public var inMph:   Double { kmh / Self.milesRatio }
+    public var inMs:    Double { kmh / Self.metersPerSecondRatio }
 
     // MARK: — Swimming safety.
     public var swimmingSafety: SwimmingSafety {
@@ -40,7 +40,7 @@ public struct WindSpeed: Sendable, Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let kmh = try container.decode(Double.self, forKey: .kmh)
-        if let error = validateNonNegative(kmh) {
+        if let error: PhysicalBoundsError = validateNonNegative(kmh) {
             throw DecodingError.dataCorruptedError(forKey: .kmh, in: container, debugDescription: "WindSpeed \(error)")
         }
         self.kmh = kmh

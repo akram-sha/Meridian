@@ -96,15 +96,15 @@ struct MarineServiceTests {
     @Test("StubMarineService returns correct water temperature")
     func stubReturnsWaterTemperature() async throws {
         let stub   = StubMarineService()
-        let result = try await stub.fetch(latitude: 52.37, longitude: 4.90)
+        let result = try await stub.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.90))
         #expect(result.waterTemperature.inCelsius == 18.0)
     }
 
     @Test("StubMarineService ignores coordinates")
     func stubIgnoresCoordinates() async throws {
         let stub      = StubMarineService()
-        let amsterdam = try await stub.fetch(latitude: 52.37, longitude: 4.90)
-        let inland    = try await stub.fetch(latitude: 51.50, longitude: 5.50)
+        let amsterdam = try await stub.fetch(coordinate: try Coordinate(latitude: 52.37, longitude: 4.90))
+        let inland    = try await stub.fetch(coordinate: try Coordinate(latitude: 51.50, longitude: 5.50))
         #expect(amsterdam.waterTemperature.inCelsius == inland.waterTemperature.inCelsius)
     }
 

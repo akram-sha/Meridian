@@ -22,7 +22,7 @@ swift build
 swift test
 ```
 
-Expect a clean build and **130 passing tests**, no network or Docker access required — every `WeatherService`/`MarineService`/`ForecastCache` test runs against an in-module stub.
+Expect a clean build and **187 passing tests**, no network or Docker access required — every `WeatherService`/`MarineService`/`ForecastCache` test runs against an in-module stub.
 
 ### Run the CLI
 
@@ -58,7 +58,7 @@ docker/localstack-init.sh
 MERIDIAN_LOCALSTACK_TESTS=1 swift test --filter DynamoDBForecastCacheTests
 ```
 
-Expect 3 passing tests, exercising a full `WeatherResult` round-trip through DynamoDB's `GetItem`/`PutItem` and confirming the `ttl` attribute is set correctly. `docker/localstack-init.sh` is idempotent — safe to re-run against an existing table.
+Expect 4 passing tests, exercising a full `WeatherResult` round-trip through DynamoDB's `GetItem`/`PutItem`, confirming the `ttl` attribute is set correctly, and confirming an expired-but-undeleted item is treated as a miss (DynamoDB's TTL sweep is lazy, so the adapter enforces expiry on read). `docker/localstack-init.sh` is idempotent — safe to re-run against an existing table.
 
 `docker-compose.localstack.yml` binds LocalStack to port `4566`. If that port is already taken by another LocalStack instance (common if you run it persistently for other projects), the `up -d` command will fail to bind — that's fine, just reuse the existing instance and skip straight to `docker/localstack-init.sh` against it.
 
@@ -90,7 +90,7 @@ Tests/
 
 ## How it works
 
-`ForecastCoordinator` fetches multiple locations concurrently via `withTaskGroup`, checking a `ForecastCache` first and writing back on a miss. The default cache is an in-memory, actor-based TTL cache (`InMemoryForecastCache`) — right for a long-lived process like the CLI or iOS app. A `DynamoDBForecastCache` implementation of the same protocol exists for a stateless deployment target like Lambda, where separate execution environments can't share memory; swapping one for the other requires no change to `ForecastCoordinator`. The cache key is derived from rounded coordinates, not from a per-request identifier, so repeated queries for the same beach actually hit the cache.
+`ForecastCoordinator` fetches multiple locations concurrently via `withTaskGroup`, checking a `ForecastCache` first and writing back on a miss. `fetch(locations:)` returns one `Result` per input location, in input order — a failed upstream fetch stays visible to the caller (the CLI prints it; an API handler can map it to a 5xx) instead of being silently dropped. The single-location `forecast(for:)` throws directly and is the shape a Lambda handler will call. The default cache is an in-memory, actor-based TTL cache (`InMemoryForecastCache`) — right for a long-lived process like the CLI or iOS app. A `DynamoDBForecastCache` implementation of the same protocol exists for a stateless deployment target like Lambda, where separate execution environments can't share memory; swapping one for the other requires no change to `ForecastCoordinator`. The cache key is derived from rounded coordinates (`Coordinate`), not from a per-request identifier, so repeated queries for the same beach actually hit the cache.
 
 Each `WeatherResult` is then handed to the activity-specific conditions type. `SwimmingConditions` runs two passes over a registered rule list:
 
@@ -112,13 +112,13 @@ All data comes from [Open-Meteo](https://open-meteo.com) — no API key, no rate
 
 ECMWF became open data in October 2025; Open-Meteo now provides the full IFS forecast at native 9 km resolution, which is the same model used by professional marine forecasting services.
 
-Coordinates are rounded to two decimal places (~1 km precision) before any API call to avoid sending precise user locations to a third-party service.
+Coordinates are validated and rounded to two decimal places (~1 km precision) at a single point — the `Coordinate` value object, constructed at the edge (CLI arguments today, request parameters tomorrow) — so no higher-precision location ever reaches a cache key, an outbound API call, or a log line. Every `WeatherResult` carries a `fetchedAt` timestamp that survives cache round-trips, so consumers can always tell how old the underlying forecast is.
 
 ---
 
 ## Testing
 
-130 tests, test-driven throughout. Tests cover rule boundary conditions (exact threshold values for temperature, UV, wind, and wave height), verdict aggregation logic, `ForecastCoordinator` concurrent fetch and cache behavior, value-object decode validation, and `WeatherPresenter` output formatting. Protocol-based service abstractions (`WeatherService`, `MarineService`, `ForecastCache`) mean all rule, coordinator, and cache tests run against stubs with no network or infrastructure dependency. A separate `DynamoDBForecastCacheTests` suite (3 tests) exercises the real DynamoDB adapter against a LocalStack container — gated behind `MERIDIAN_LOCALSTACK_TESTS=1` so plain `swift test` never requires Docker; see `docker/`.
+187 tests, test-driven throughout. Tests cover rule boundary conditions (exact threshold values for temperature, UV, wind, and wave height), verdict aggregation logic, `ForecastCoordinator` concurrent fetch, failure-surfacing, and cache behavior, coordinate rounding/validation boundaries, value-object decode validation, and `WeatherPresenter` output formatting. Protocol-based service abstractions (`WeatherService`, `MarineService`, `ForecastCache`) mean all rule, coordinator, and cache tests run against stubs with no network or infrastructure dependency. A separate `DynamoDBForecastCacheTests` suite (4 tests) exercises the real DynamoDB adapter against a LocalStack container — gated behind `MERIDIAN_LOCALSTACK_TESTS=1` so plain `swift test` never requires Docker; see `docker/`.
 
 ---
 
@@ -149,5 +149,7 @@ The iOS app will use `Core` and `Presentation` unchanged. Saved locations sync v
 **Swift 6 / strict concurrency.** All public types conform to `Sendable`. `ForecastCoordinator` stays a plain `struct` — the mutable TTL cache state lives in whichever `ForecastCache` is injected (`InMemoryForecastCache` is itself an `actor`), not in the coordinator, which is what makes the cache backend swappable per deployment target without touching the coordinator.
 
 **Extensibility.** The `Activity` enum (`swimming`, `diving`, `surfing`) and `ActivityConditions` protocol are in place. Each activity owns its rule registry. New rules are one file and one line of registration.
+
+**Coordinates.** `Coordinate` is the single point where privacy rounding and range validation happen — at construction, throwing `CoordinateError` on out-of-range or non-finite input (request input, not a programming bug, so no trap). Services and cache keys accept only `Coordinate`, so nothing downstream can carry unrounded values, and its fixed two-decimal canonical strings are the only coordinate form used in outbound URLs and DynamoDB partition keys. `Location` is a name plus a `Coordinate` and deliberately has no identity of its own — an earlier design minted a `UUID` per instance, which broke cache keying (see the regression test in `ForecastCoordinatorTests`).
 
 **Validated construction.** Value objects with a non-trivial `internal init` (`AirTemperature`, `WaterTemperature`, `WaveHeight`, `UVIndex`, `WindSpeed`, `WeatherCode`) validate against physically-grounded bounds (e.g. no temperature below absolute zero, no negative wave height) on *every* construction path — the normal `internal init` (`preconditionFailure`s on violation; trusted, in-module callers only) and a manual `Decodable` conformance (throws `DecodingError` on violation; for data crossing a serialization boundary, such as a cache round-trip). Both paths matter: `Codable` conformance synthesizes at the type's own `public` access level regardless of the stored property's privacy, so without the manual `Decodable` half, any module could construct an invalid value straight from JSON and bypass `internal init` entirely.

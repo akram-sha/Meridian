@@ -1,3 +1,5 @@
+import Foundation
+
 public struct WeatherResult: Sendable, Codable {
     public let airTemperature:   AirTemperature
     public let waterTemperature: WaterTemperature?  // nil for inland coordinates or if marine API is unavailable.
@@ -5,6 +7,8 @@ public struct WeatherResult: Sendable, Codable {
     public let uvIndex:          UVIndex
     public let windSpeed:        WindSpeed
     public let weatherCode:      WeatherCode
+    public let fetchedAt:        Date               // when the forecast was fetched from the provider — survives
+                                                    // cache round-trips so consumers can always tell data age.
 
     internal init(
     airTemperature:   AirTemperature,
@@ -13,6 +17,7 @@ public struct WeatherResult: Sendable, Codable {
     uvIndex:          UVIndex,
     windSpeed:        WindSpeed,
     weatherCode:      WeatherCode,
+    fetchedAt:        Date              = Date(),
     ) {
         self.airTemperature   = airTemperature
         self.waterTemperature = waterTemperature
@@ -20,6 +25,7 @@ public struct WeatherResult: Sendable, Codable {
         self.uvIndex          = uvIndex
         self.windSpeed        = windSpeed
         self.weatherCode      = weatherCode
+        self.fetchedAt        = fetchedAt
     }
 
     public var swimmingConditions: SwimmingConditions? {

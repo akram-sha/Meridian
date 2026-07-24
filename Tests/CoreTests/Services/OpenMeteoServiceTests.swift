@@ -69,7 +69,7 @@ struct OpenMeteoServiceTests {
                 weatherCode:    WeatherCode(raw: 1)
             )
         ))
-        let result = try await service.fetch(latitude: 0, longitude: 0)
+        let result = try await service.fetch(coordinate: try Coordinate(latitude: 0, longitude: 0))
         #expect(result.airTemperature.inCelsius == 22.0)
     }
 
@@ -77,7 +77,7 @@ struct OpenMeteoServiceTests {
     func fakeServiceFailure() async throws {
         let service = FakeWeatherService(result: .failure(OpenMeteoService.ServiceError.invalidResponse))
         await #expect(throws: OpenMeteoService.ServiceError.invalidResponse) {
-            try await service.fetch(latitude: 0, longitude: 0)
+            try await service.fetch(coordinate: try Coordinate(latitude: 0, longitude: 0))
         }
     }
 
@@ -143,7 +143,7 @@ struct OpenMeteoServiceTests {
 
 private struct FakeWeatherService: WeatherService {
     let result: Result<WeatherResult, Error>
-    func fetch(latitude: Double, longitude: Double) async throws -> WeatherResult {
+    func fetch(coordinate: Coordinate) async throws -> WeatherResult {
         try result.get()
     }
 }
