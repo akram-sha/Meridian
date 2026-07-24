@@ -13,7 +13,7 @@ internal struct MarineResponse: Decodable {
     func toMarineConditions() -> MarineConditions {
         MarineConditions(
             waterTemperature: WaterTemperature(celsius: current.seaSurfaceTemperature),
-            waveHeight:       current.waveHeight.map { WaveHeight(metres: $0) }
+            waveHeight:       current.waveHeight.map { WaveHeight(meters: $0) }
         )
     }
 }

@@ -18,7 +18,7 @@ struct DynamoDBForecastCacheTests {
     private static let sampleResult = WeatherResult(
         airTemperature: AirTemperature(celsius: 22.5),
         waterTemperature: WaterTemperature(celsius: 18.0),
-        waveHeight: WaveHeight(metres: 0.3),
+        waveHeight: WaveHeight(meters: 0.3),
         uvIndex: UVIndex(value: 6.8),
         windSpeed: WindSpeed(kmh: 12.0),
         weatherCode: WeatherCode(raw: 1),
@@ -60,7 +60,7 @@ struct DynamoDBForecastCacheTests {
 
             #expect(cached?.airTemperature.inCelsius == 22.5)
             #expect(cached?.waterTemperature?.inCelsius == 18.0)
-            #expect(cached?.waveHeight?.inMetres == 0.3)
+            #expect(cached?.waveHeight?.inMeters == 0.3)
             #expect(cached?.uvIndex.value == 6.8)
             #expect(cached?.windSpeed.inKmh == 12.0)
             #expect(cached?.weatherCode.raw == 1)

@@ -92,7 +92,7 @@ struct SwimmingConditionsTests {
             (waterTemperature: 5.0,  uv: 0.0, kmh: 0.0,  wave: WaveHeight?.none,                     rule: "water temperature"),
             (waterTemperature: 22.0, uv: 12.0, kmh: 0.0,  wave: WaveHeight?.none,                     rule: "UV index"),
             (waterTemperature: 22.0, uv: 0.0, kmh: 50.0, wave: WaveHeight?.none,                     rule: "wind speed"),
-            (waterTemperature: 22.0, uv: 0.0, kmh: 0.0,  wave: WaveHeight?.some(WaveHeight(metres: 2.5)), rule: "wave height"),
+            (waterTemperature: 22.0, uv: 0.0, kmh: 0.0,  wave: WaveHeight?.some(WaveHeight(meters: 2.5)), rule: "wave height"),
         ]
     )
     func eachRuleIndependentlyTriggersNoGo(waterTemperature: Double, uv: Double, kmh: Double, wave: WaveHeight?, rule: String) {
@@ -109,7 +109,7 @@ struct SwimmingConditionsTests {
             (waterTemperature: 19.0, uv: 0.0, kmh: 0.0,  wave: WaveHeight?.none,                     rule: "water temperature"),
             (waterTemperature: 22.0, uv: 7.0, kmh: 0.0,  wave: WaveHeight?.none,                     rule: "UV index"),
             (waterTemperature: 22.0, uv: 0.0, kmh: 20.0, wave: WaveHeight?.none,                     rule: "wind speed"),
-            (waterTemperature: 22.0, uv: 0.0, kmh: 0.0,  wave: WaveHeight?.some(WaveHeight(metres: 0.7)), rule: "wave height"),
+            (waterTemperature: 22.0, uv: 0.0, kmh: 0.0,  wave: WaveHeight?.some(WaveHeight(meters: 0.7)), rule: "wave height"),
         ]
     )
     func eachRuleIndependentlyTriggersCaution(waterTemperature: Double, uv: Double, kmh: Double, wave: WaveHeight?, rule: String) {

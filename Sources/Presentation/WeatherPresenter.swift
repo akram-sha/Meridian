@@ -30,7 +30,7 @@ public struct WeatherPresenter {
 
         let waveLine: String
         if let wave = weather.waveHeight {
-            waveLine = String(format: "Wave         : %.1f m / %.1f ft", wave.inMetres, wave.inFeet)
+            waveLine = String(format: "Wave         : %.1f m / %.1f ft", wave.inMeters, wave.inFeet)
         } else {
             waveLine = "Wave         : unavailable"
         }

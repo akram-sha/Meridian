@@ -103,7 +103,7 @@ struct WeatherPresenterTests {
         let weather = WeatherResult(
             airTemperature:   AirTemperature(celsius: 22.5),
             waterTemperature: WaterTemperature(celsius: 20),
-            waveHeight:       WaveHeight(metres: 0.8),
+            waveHeight:       WaveHeight(meters: 0.8),
             uvIndex:          UVIndex(value: 6.8),
             windSpeed:        WindSpeed(kmh: 12.0),
             weatherCode:      WeatherCode(raw: 1),
