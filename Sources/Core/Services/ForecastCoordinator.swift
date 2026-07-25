@@ -2,7 +2,9 @@ public struct ForecastCoordinator: Sendable {
     private let weatherService: any WeatherService
     private let cache: any ForecastCache
 
-    public init(weatherService: any WeatherService, cache: any ForecastCache = InMemoryForecastCache()) {
+    public init(
+        weatherService: any WeatherService, cache: any ForecastCache = InMemoryForecastCache()
+    ) {
         self.weatherService = weatherService
         self.cache = cache
     }
@@ -12,11 +14,11 @@ public struct ForecastCoordinator: Sendable {
     public func forecast(for location: Location) async throws -> LocationForecast {
         let key = ForecastCacheKey(coordinate: location.coordinate)
 
-        if let cached = await cache.result(for: key) {
+        if let cached: WeatherResult = await cache.result(for: key) {
             return LocationForecast(location: location, result: cached)
         }
 
-        let result = try await weatherService.fetch(coordinate: location.coordinate)
+        let result: WeatherResult = try await weatherService.fetch(coordinate: location.coordinate)
         await cache.store(result, for: key)
         return LocationForecast(location: location, result: result)
     }
@@ -35,7 +37,8 @@ public struct ForecastCoordinator: Sendable {
                     }
                 }
             }
-            var results = [Result<LocationForecast, any Error>?](repeating: nil, count: locations.count)
+            var results = [Result<LocationForecast, any Error>?](
+                repeating: nil, count: locations.count)
             for await (index, result) in group {
                 results[index] = result
             }

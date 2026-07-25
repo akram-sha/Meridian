@@ -1,12 +1,11 @@
 import Foundation
 
-/// Validated, privacy-rounded coordinate pair — the single place coordinate rounding
-/// happens. Values are rounded to two decimal places (~1 km) at construction, so no
-/// higher-precision location survives past this boundary: not into a cache key, an
-/// outbound API call, or a log line. `-0.0` is normalized to `0.0` so equal
-/// coordinates always produce identical canonical strings.
+/// Validated, privacy-rounded coordinate pair — the single place coordinate rounding happens.
+/// Values are rounded to two decimal places (~1 km) at construction, so no higher-precision
+/// location survives past this boundary: not into a cache key, an outbound API call, or a log line.
+///  `-0.0` is normalized to `0.0` so equal coordinates always produce identical canonical strings.
 public struct Coordinate: Sendable, Hashable {
-    public let latitude:  Double
+    public let latitude: Double
     public let longitude: Double
 
     public init(latitude: Double, longitude: Double) throws {
@@ -16,18 +15,18 @@ public struct Coordinate: Sendable, Hashable {
         guard (-180.0...180.0).contains(longitude) else {
             throw CoordinateError.longitudeOutOfRange(longitude)
         }
-        self.latitude  = Self.privacyRounded(latitude)
+        self.latitude = Self.privacyRounded(latitude)
         self.longitude = Self.privacyRounded(longitude)
     }
 
     /// Fixed two-decimal representation, stable across Swift versions and platforms —
     /// the only form used for cache partition keys and outbound API query values.
-    public var canonicalLatitude:  String { Self.canonical(latitude) }
+    public var canonicalLatitude: String { Self.canonical(latitude) }
     public var canonicalLongitude: String { Self.canonical(longitude) }
 
     private static func privacyRounded(_ value: Double) -> Double {
         let rounded: Double = (value * 100).rounded() / 100
-        return rounded == 0 ? 0 : rounded   // collapse -0.0 into 0.0
+        return rounded == 0 ? 0 : rounded  // collapse -0.0 into 0.0
     }
 
     private static func canonical(_ value: Double) -> String {
