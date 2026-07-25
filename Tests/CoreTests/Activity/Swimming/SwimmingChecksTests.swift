@@ -1,4 +1,5 @@
 import Testing
+
 @testable import Core
 
 // Each SwimmingRule conformance is tested here in isolation — calling `.evaluate(_:)`
@@ -23,20 +24,20 @@ import Testing
 private func f(_ v: Double) -> String { String(format: "%.1f", v) }
 
 private func weather(
-    airTemperature:   Double      = 20,
-    waterTemperature: Double?     = nil,
-    waveHeight:       WaveHeight? = nil,
-    uv:               Double      = 0,
-    kmh:              Double      = 0,
-    weatherCode:      Int         = 1
+    airTemperature: Double = 20,
+    waterTemperature: Double? = nil,
+    waveHeight: WaveHeight? = nil,
+    uv: Double = 0,
+    kmh: Double = 0,
+    weatherCode: Int = 1
 ) -> WeatherResult {
     WeatherResult(
-        airTemperature:   AirTemperature(celsius: airTemperature),
+        airTemperature: AirTemperature(celsius: airTemperature),
         waterTemperature: waterTemperature.map { WaterTemperature(celsius: $0) },
-        waveHeight:       waveHeight,
-        uvIndex:          UVIndex(value: uv),
-        windSpeed:        WindSpeed(kmh: kmh),
-        weatherCode:      WeatherCode(raw: weatherCode),
+        waveHeight: waveHeight,
+        uvIndex: UVIndex(value: uv),
+        windSpeed: WindSpeed(kmh: kmh),
+        weatherCode: WeatherCode(raw: weatherCode),
     )
 }
 
@@ -79,9 +80,54 @@ struct ThunderstormRuleTests {
 struct WaterTemperatureRuleTests {
     let rule = WaterTemperatureRule()
 
-    @Test("Nil water temperature is nil (no opinion)")
-    func nilInputIsNil() {
-        #expect(rule.evaluate(weather(waterTemperature: nil)) == nil)
+    @Test("Dangerous band is noGo, mentioning the 11°C minimum")
+    func dangerousIsNoGo() {
+        let water: WaterTemperature = WaterTemperature(celsius: 5)
+        let reasons = noGoReasons(rule.evaluate(weather(waterTemperature: 5)))
+        #expect(
+            reasons == [
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below the safe minimum of 11°C"
+            ])
+    }
+
+    @Test("Extreme-risk band is noGo, mentioning incapacitation")
+    func extremeRiskIsNoGo() {
+        let water = WaterTemperature(celsius: 11.5)
+        let reasons = noGoReasons(rule.evaluate(weather(waterTemperature: 11.5)))
+        #expect(
+            reasons == [
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) — incapacitation risk within minutes"
+            ])
+    }
+
+    @Test("Cold-shock band is caution, mentioning cold shock")
+    func coldShockIsCaution() {
+        let water = WaterTemperature(celsius: 14)
+        let reasons = cautionReasons(rule.evaluate(weather(waterTemperature: 14)))
+        #expect(
+            reasons == [
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is in the cold shock zone"
+            ])
+    }
+
+    @Test("Restricted band is caution, mentioning World Aquatics")
+    func restrictedIsCaution() {
+        let water = WaterTemperature(celsius: 17)
+        let reasons = cautionReasons(rule.evaluate(weather(waterTemperature: 17)))
+        #expect(
+            reasons == [
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below World Aquatics competition minimum (16°C)"
+            ])
+    }
+
+    @Test("Wetsuit-advised band is caution with correctly formatted °C/°F")
+    func wetsuitAdvisedIsCaution() {
+        let water = WaterTemperature(celsius: 19)
+        let reasons = cautionReasons(rule.evaluate(weather(waterTemperature: 19)))
+        #expect(
+            reasons == [
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F), wetsuit advised"
+            ])
     }
 
     @Test("Ideal water temperature is nil")
@@ -89,47 +135,9 @@ struct WaterTemperatureRuleTests {
         #expect(rule.evaluate(weather(waterTemperature: 22)) == nil)
     }
 
-    @Test("Wetsuit-advised band is caution with correctly formatted °C/°F")
-    func wetsuitAdvisedIsCaution() {
-        let water = WaterTemperature(celsius: 19)
-        let reasons = cautionReasons(rule.evaluate(weather(waterTemperature: 19)))
-        #expect(reasons == ["Water surface advised at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F)"])
-    }
-
-    @Test("Restricted band is caution, mentioning World Aquatics")
-    func restrictedIsCaution() {
-        let water = WaterTemperature(celsius: 17)
-        let reasons = cautionReasons(rule.evaluate(weather(waterTemperature: 17)))
-        #expect(reasons == [
-            "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below World Aquatics competition minimum (16°C)"
-        ])
-    }
-
-    @Test("Cold-shock band is caution, mentioning cold shock")
-    func coldShockIsCaution() {
-        let water = WaterTemperature(celsius: 14)
-        let reasons = cautionReasons(rule.evaluate(weather(waterTemperature: 14)))
-        #expect(reasons == [
-            "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is in the cold shock zone"
-        ])
-    }
-
-    @Test("Extreme-risk band is noGo, mentioning incapacitation")
-    func extremeRiskIsNoGo() {
-        let water = WaterTemperature(celsius: 11.5)
-        let reasons = noGoReasons(rule.evaluate(weather(waterTemperature: 11.5)))
-        #expect(reasons == [
-            "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) — incapacitation risk within minutes"
-        ])
-    }
-
-    @Test("Dangerous band is noGo, mentioning the 11°C minimum")
-    func dangerousIsNoGo() {
-        let water = WaterTemperature(celsius: 5)
-        let reasons = noGoReasons(rule.evaluate(weather(waterTemperature: 5)))
-        #expect(reasons == [
-            "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below the safe minimum of 11°C"
-        ])
+    @Test("Nil water temperature is nil (no opinion)")
+    func nilInputIsNil() {
+        #expect(rule.evaluate(weather(waterTemperature: nil)) == nil)
     }
 }
 
@@ -159,7 +167,8 @@ struct UVIndexRuleTests {
     @Test("Very high UV is caution, mentioning high SPF")
     func veryHighIsCaution() {
         let reasons = cautionReasons(rule.evaluate(weather(uv: 9.0)))
-        #expect(reasons == ["UV index \(f(9.0)) is very high — apply high SPF and limit exposure time"])
+        #expect(
+            reasons == ["UV index \(f(9.0)) is very high — apply high SPF and limit exposure time"])
     }
 
     @Test("Extreme UV is noGo, mentioning severe risk")
@@ -194,13 +203,19 @@ struct WindSpeedRuleTests {
     @Test("Concerning wind is caution, mentioning canceled swims")
     func concerningIsCaution() {
         let reasons = cautionReasons(rule.evaluate(weather(kmh: 30)))
-        #expect(reasons == ["\(expectedPrefix(forKmh: 30)) — Force 4–5, organized swims typically canceled"])
+        #expect(
+            reasons == [
+                "\(expectedPrefix(forKmh: 30)) — Force 4–5, organized swims typically canceled"
+            ])
     }
 
     @Test("Dangerous wind is noGo, mentioning Small Craft Advisory")
     func dangerousIsNoGo() {
         let reasons = noGoReasons(rule.evaluate(weather(kmh: 50)))
-        #expect(reasons == ["\(expectedPrefix(forKmh: 50)) exceeds Force 6 — Small Craft Advisory threshold"])
+        #expect(
+            reasons == [
+                "\(expectedPrefix(forKmh: 50)) exceeds Force 6 — Small Craft Advisory threshold"
+            ])
     }
 }
 

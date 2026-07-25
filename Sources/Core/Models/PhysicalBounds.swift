@@ -2,7 +2,6 @@ import Foundation
 
 /// Shared validation for the small set of physically-grounded constraints every measurement
 /// value object enforces (finite, and a domain floor where one is physically meaningful).
-///
 /// `internal init` uses `preconditionFailure` on violation — those callers are trusted,
 /// in-module code (DTOs, stubs); a violation there is a programming bug, not user input, and
 /// should crash loudly in development rather than propagate a nonsensical value into a verdict.

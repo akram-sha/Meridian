@@ -22,23 +22,23 @@ internal struct WaterTemperatureRule: SwimmingRule {
         switch water.owsSafety {
         case .dangerous:
             return .noGo(reasons: [
-                "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below the safe minimum of 11°C"
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below the safe minimum of 11°C"
             ])
         case .extremeRisk:
             return .noGo(reasons: [
-                "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) — incapacitation risk within minutes"
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) — incapacitation risk within minutes"
             ])
         case .coldShock:
             return .caution(reasons: [
-                "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is in the cold shock zone"
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is in the cold shock zone"
             ])
         case .restricted:
             return .caution(reasons: [
-                "Water surface temperature \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below World Aquatics competition minimum (16°C)"
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F) is below World Aquatics competition minimum (16°C)"
             ])
         case .wetsuitAdvised:
             return .caution(reasons: [
-                "Water surface advised at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F)"
+                "Water surface temperature at \(f(water.inCelsius)) °C (\(f(water.inFahrenheit)) °F), wetsuit advised"
             ])
         case .ideal:
             return nil
