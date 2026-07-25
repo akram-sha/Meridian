@@ -22,7 +22,7 @@ swift build
 swift test
 ```
 
-Expect a clean build and **187 passing tests**, no network or Docker access required — every `WeatherService`/`MarineService`/`ForecastCache` test runs against an in-module stub.
+Expect a clean build and **214 passing tests**, no network or Docker access required — every `WeatherService`/`MarineService`/`ForecastCache` test runs against an in-module stub, and the Lambda handler's pipeline is tested through `MeridianLambdaCore` without any Lambda runtime.
 
 ### Run the CLI
 
@@ -62,6 +62,30 @@ Expect 4 passing tests, exercising a full `WeatherResult` round-trip through Dyn
 
 `docker-compose.localstack.yml` binds LocalStack to port `4566`. If that port is already taken by another LocalStack instance (common if you run it persistently for other projects), the `up -d` command will fail to bind — that's fine, just reuse the existing instance and skip straight to `docker/localstack-init.sh` against it.
 
+### Optional: the backend API (AWS Lambda, staged on LocalStack)
+
+The `/v1/forecast` endpoint — the frozen v1 wire contract — is implemented by the
+`MeridianLambda` targets and deployed as a SAM stack (`template.yaml`): an API Gateway
+**REST API** gated by an API key + usage plan, a `provided.al2023` Swift Lambda, and the
+DynamoDB forecast-cache table with native TTL. To build and deploy it locally:
+
+```bash
+./scripts/build-lambda.sh     # Docker cross-compile (swift:amazonlinux2023) → bootstrap zip
+
+export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1
+samlocal deploy --stack-name meridian --resolve-s3 --capabilities CAPABILITY_IAM \
+  --no-confirm-changeset --no-fail-on-empty-changeset
+
+# Grab the API id + key from the stack, then:
+curl -H "x-api-key: <key>" \
+  "http://localhost:4566/restapis/<apiId>/prod/_user_request_/v1/forecast?latitude=52.37&longitude=4.53&activity=swimming"
+```
+
+Requests with coordinates above 2 decimal places are rejected with `400
+COORDINATE_TOO_PRECISE` by design — clients must round on-device so precise locations
+never appear in gateway logs. Requests without `x-api-key` get a 403 from API Gateway
+before the handler runs.
+
 ### IDE note (Cursor / CLion / VS Code with SourceKit-LSP)
 
 After any `Package.swift` change (new dependency, new target, version bump), `sourcekit-lsp` can hold on to a stale in-memory package graph and show phantom import/symbol errors on code that builds and tests cleanly from the terminal. If that happens: restart the language server (kill the `sourcekit-lsp` process and let the editor respawn it, or Command Palette → "Developer: Reload Window"). This is an editor-index staleness issue, not a real compile error — always trust `swift build`/`swift test` output over IDE squiggles when the two disagree.
@@ -70,7 +94,7 @@ After any `Package.swift` change (new dependency, new target, version bump), `so
 
 ## Architecture
 
-Four targets in a single Swift package:
+Six targets in a single Swift package:
 
 ```
 Sources/
@@ -78,13 +102,16 @@ Sources/
   Presentation/            — WeatherPresenter, verdict formatting
   App/                     — CLI entry point (ArgumentParser)
   DynamoDBForecastCache/   — DynamoDB-backed ForecastCache adapter (not imported by App)
+  MeridianLambdaCore/      — the API's testable pipeline: request validation, v1 wire types, query → Core → JSON
+  MeridianLambda/          — thin Lambda runtime shim (API Gateway v1 proxy event in, contract JSON out)
 Tests/
   CoreTests/               — rule boundary tests, service layer, model behavior
   PresentationTests/
+  MeridianLambdaTests/     — contract-shape, error-code, and precision-boundary tests (no Lambda runtime needed)
   DynamoDBForecastCacheTests/  — gated behind MERIDIAN_LOCALSTACK_TESTS=1, needs LocalStack
 ```
 
-`Core` has no UI or framework dependencies and imports cleanly into any target — CLI today, iOS and a Lambda handler tomorrow — without modification. `Presentation` depends only on `Core`. The `App` target wires them together. `DynamoDBForecastCache` also depends only on `Core` (via the `ForecastCache` protocol) and exists to be imported by a future Lambda handler target — `Core` itself never gains an AWS dependency.
+`Core` has no UI or framework dependencies and imports cleanly into any target — CLI today, the Lambda handler now, iOS next — without modification. `Presentation` depends only on `Core`. The `App` target wires them together. `DynamoDBForecastCache` depends only on `Core` (via the `ForecastCache` protocol) — `Core` itself never gains an AWS dependency. `MeridianLambdaCore` is the only module that knows the v1 wire shape (the same boundary rule the DTOs apply to Open-Meteo's JSON), and `MeridianLambda` is the only module that sees API Gateway/AWS runtime types.
 
 ---
 
@@ -118,7 +145,7 @@ Coordinates are validated and rounded to two decimal places (~1 km precision) at
 
 ## Testing
 
-187 tests, test-driven throughout. Tests cover rule boundary conditions (exact threshold values for temperature, UV, wind, and wave height), verdict aggregation logic, `ForecastCoordinator` concurrent fetch, failure-surfacing, and cache behavior, coordinate rounding/validation boundaries, value-object decode validation, and `WeatherPresenter` output formatting. Protocol-based service abstractions (`WeatherService`, `MarineService`, `ForecastCache`) mean all rule, coordinator, and cache tests run against stubs with no network or infrastructure dependency. A separate `DynamoDBForecastCacheTests` suite (4 tests) exercises the real DynamoDB adapter against a LocalStack container — gated behind `MERIDIAN_LOCALSTACK_TESTS=1` so plain `swift test` never requires Docker; see `docker/`.
+214 tests, test-driven throughout. Tests cover rule boundary conditions (exact threshold values for temperature, UV, wind, and wave height), verdict aggregation logic, `ForecastCoordinator` concurrent fetch, failure-surfacing, and cache behavior, coordinate rounding/validation boundaries, value-object decode validation, and `WeatherPresenter` output formatting. Protocol-based service abstractions (`WeatherService`, `MarineService`, `ForecastCache`) mean all rule, coordinator, and cache tests run against stubs with no network or infrastructure dependency. A separate `DynamoDBForecastCacheTests` suite (4 tests) exercises the real DynamoDB adapter against a LocalStack container — gated behind `MERIDIAN_LOCALSTACK_TESTS=1` so plain `swift test` never requires Docker; see `docker/`.
 
 ---
 
@@ -135,7 +162,7 @@ Coordinates are validated and rounded to two decimal places (~1 km precision) at
 | LocationComparer (rank beaches by verdict) | 🔨 Next |
 | Diving conditions | Planned |
 | Wave period model (surfing) | Planned |
-| Backend API (AWS Lambda + API Gateway) | Planned |
+| Backend API (AWS Lambda + API Gateway, key-gated `/v1/forecast`) | ✅ Done — verified on LocalStack; production deploy pending CI |
 | iOS app | Planned |
 
 The iOS app will use `Core` and `Presentation` unchanged. Saved locations sync via `NSPersistentCloudKitContainer` (iCloud, no backend required). Condition alerts use `BGAppRefreshTask` and local notifications. No user accounts.
@@ -144,7 +171,7 @@ The iOS app will use `Core` and `Presentation` unchanged. Saved locations sync v
 
 ## Design notes
 
-**Backend direction.** Meridian is moving from a standalone CLI to a backend API service (AWS Lambda + API Gateway, developed and staged against LocalStack) that a future iOS app will call. `Core` and `Presentation` are unchanged by this — a Lambda handler is a fourth thin adapter target, exactly like `App` today, with zero business logic of its own. See `misc/` for the current backend planning notes.
+**Backend direction.** Meridian's backend API (AWS Lambda + API Gateway, developed and staged against LocalStack) is implemented: `GET /v1/forecast` behind an API key, returning the verdict, reasons, raw metric measurements, the rounded coordinate actually used, and a `fetchedAt` timestamp. The wire contract is frozen at `/v1` — additive changes only; breaking changes require `/v2`. The handler is a thin adapter exactly like `App`: zero business logic, and `Core` needed zero changes to gain it. Coordinates with more than 2 decimal places are rejected (400) rather than re-rounded, so client-side privacy rounding is contractual, not optional.
 
 **Swift 6 / strict concurrency.** All public types conform to `Sendable`. `ForecastCoordinator` stays a plain `struct` — the mutable TTL cache state lives in whichever `ForecastCache` is injected (`InMemoryForecastCache` is itself an `actor`), not in the coordinator, which is what makes the cache backend swappable per deployment target without touching the coordinator.
 
