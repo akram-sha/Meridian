@@ -3,6 +3,11 @@ import PackageDescription
 
 let package = Package(
     name: "Meridian",
+    products: [
+        // Declared explicitly so the AWSLambdaPackager `archive` plugin can find it —
+        // the plugin only archives executable *products*, not bare targets.
+        .executable(name: "MeridianLambda", targets: ["MeridianLambda"]),
+    ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
         .package(url: "https://github.com/soto-project/soto.git", from: "7.10.0"),

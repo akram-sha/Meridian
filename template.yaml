@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Meridian private forecast API — Lambda (Swift, provided.al2023) behind an API Gateway
+  REST API (v1 — required for API keys/usage plans) with a DynamoDB forecast cache.
+  Deploys unchanged to LocalStack (samlocal) and real AWS; only endpoint/credentials
+  configuration differs (the handler reads AWS_ENDPOINT_URL / MERIDIAN_DYNAMODB_ENDPOINT).
+
+Parameters:
+  CacheTableName:
+    Type: String
+    Default: meridian-forecast-cache
+    Description: DynamoDB table backing DynamoDBForecastCache (pk String key, ttl expiry).
+
+Resources:
+  ForecastApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Auth:
+        # The private-API gate: every route requires x-api-key; the usage plan is the
+        # rate-limiting decision from the backend plan (points 5 & 6, one mechanism).
+        ApiKeyRequired: true
+        UsagePlan:
+          CreateUsagePlan: PER_API
+          Throttle:
+            RateLimit: 5
+            BurstLimit: 10
+          Quota:
+            Limit: 10000
+            Period: MONTH
+
+  ForecastFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: meridian-forecast
+      Runtime: provided.al2023
+      Handler: bootstrap
+      Architectures:
+        - x86_64
+      MemorySize: 256
+      Timeout: 15
+      CodeUri: .build/plugins/AWSLambdaPackager/outputs/AWSLambdaPackager/MeridianLambda/MeridianLambda.zip
+      Environment:
+        Variables:
+          MERIDIAN_CACHE_TABLE: !Ref CacheTableName
+      # Least-privilege per function (backend plan, privacy section): exactly the two
+      # actions DynamoDBForecastCache performs, on exactly its own table.
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+              Resource: !GetAtt CacheTable.Arn
+      Events:
+        Forecast:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ForecastApi
+            Path: /v1/forecast
+            Method: get
+
+  CacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref CacheTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      # Native TTL expiry doubles as the privacy control: cached lookups auto-expire,
+      # location query history is never retained past the cache window.
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+
+Outputs:
+  ForecastEndpoint:
+    Description: Invoke URL for the v1 forecast endpoint (append the x-api-key header).
+    Value: !Sub "https://${ForecastApi}.execute-api.${AWS::Region}.amazonaws.com/prod/v1/forecast"
+  ApiKeyId:
+    Description: ID of the generated API key (fetch its value via `apigateway get-api-key --include-value`).
+    Value: !Ref ForecastApiApiKey
